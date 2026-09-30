@@ -1,0 +1,101 @@
+{
+  "world":   { "arena": { "width": 2880, "height": 1620 }, "camera": { "lerp": 0.1 }, "separation": 0.5 },
+  "stats":   { "minFactor": 0.1, "maxFactor": 5, "armorK": 15, "regenAlpha": 5 },
+  "player":  { "invulnerability": 0.5, "size": 48, "lowHpRatio": 0.3 },
+
+  "heroines": {
+    "genki": {
+      "name": "Генки", "archetype": "Спидранерша", "color": "#ff6fb1", "weapon": "rifle",
+      "baseHp": 100, "baseMoveSpeed": 260,
+      "stats": { "hp": -20, "damage": 0, "attackSpeed": 15, "moveSpeed": 20, "range": 0,
+                 "armor": 0, "regen": 2, "crit": 5, "resourceSearch": 10 },
+      "styleMultipliers": { "combo": 1.5 }
+    },
+    "kuudere": {
+      "name": "Кудере", "archetype": "Снайперша", "color": "#2b3a67", "weapon": "laser",
+      "baseHp": 100, "baseMoveSpeed": 240,
+      "stats": { "hp": 0, "damage": 10, "attackSpeed": 0, "moveSpeed": -10, "range": 20,
+                 "armor": 0, "regen": 2, "crit": 15, "resourceSearch": 10 },
+      "styleMultipliers": { "crit": 1.5, "longShot": 1.5 }
+    },
+    "yandere": {
+      "name": "Яндере", "archetype": "Мясница", "color": "#b3122e", "weapon": "shotgun",
+      "baseHp": 100, "baseMoveSpeed": 230,
+      "stats": { "hp": 40, "damage": 15, "attackSpeed": 0, "moveSpeed": -10, "range": -10,
+                 "armor": 5, "regen": 5, "crit": 5, "resourceSearch": 10 },
+      "styleMultipliers": { "close": 1.5 }
+    }
+  },
+
+  "weapons": {
+    "rifle":   { "name": "Штурмовая винтовка", "damage": 6, "fireRate": 6, "range": 450, "spread": 8, "pellets": 1,
+                 "pierce": 0, "pierceDamageFactor": 1, "projectileSpeed": 900,
+                 "critChance": 0, "critMultiplier": 2, "knockback": 0 },
+    "laser":   { "name": "Лазерная снайперская винтовка", "damage": 40, "fireRate": 0.8, "range": 900, "spread": 0, "pellets": 1,
+                 "pierce": 3, "pierceDamageFactor": 0.8, "projectileSpeed": 2500,
+                 "critChance": 5, "critMultiplier": 2.5, "knockback": 0 },
+    "shotgun": { "name": "Дробовик", "damage": 7, "fireRate": 1.2, "range": 300, "spread": 40, "pellets": 6,
+                 "pierce": 1, "pierceDamageFactor": 0.5, "projectileSpeed": 800,
+                 "critChance": 0, "critMultiplier": 2, "knockback": 40 }
+  },
+
+  "enemies": {
+    "walker": { "name": "Шатун",   "hp": 20,  "speed": 70,  "damage": 8,  "style": 10, "size": 40, "color": "#6b8f5e", "weight": 6, "fromStream": 1, "knockbackResist": 0 },
+    "runner": { "name": "Бегун",   "hp": 10,  "speed": 170, "damage": 6,  "style": 12, "size": 32, "color": "#a3c46a", "weight": 3, "fromStream": 2, "knockbackResist": 0 },
+    "brute":  { "name": "Громила", "hp": 120, "speed": 45,  "damage": 20, "style": 40, "size": 72, "color": "#3f5a36", "weight": 1, "fromStream": 5, "knockbackResist": 1 }
+  },
+  "boss": {
+    "name": "Хейтер", "streams": [10, 20], "hp": 2500, "speed": 80, "damage": 25, "style": 500,
+    "size": 140, "color": "#4a1f5c", "spawnOffset": 80,
+    "dash":   { "cooldown": 6, "telegraph": 1, "speed": 700, "distance": 600 },
+    "summon": { "cooldown": 8, "count": 5 }
+  },
+  "scaling": { "hpPerStream": 0.12, "damagePerStream": 0.08 },
+
+  "spawn": { "interval": 2.0, "intervalStep": 0.063, "minInterval": 0.8,
+             "group": 3, "groupEvery": 7, "minDistance": 400, "telegraph": 1, "maxAlive": 200 },
+
+  "style": {
+    "threshold": { "base": 500, "step": 550 },
+    "comboWindow": 2, "comboStep": 0.05, "comboCap": 40,
+    "critBonus": 5, "longShotRatio": 0.8, "longShotBonus": 8, "closeDistance": 90, "closeBonus": 8
+  },
+  "viewers": { "base": 12, "perStyle": 0.05 },
+
+  "drops":   { "coinValue": 1, "magnetRadius": 120, "magnetSpeed": 700 },
+  "economy": { "styleToCoins": 0.03 },
+
+  "tasks": {
+    "reward": { "base": 8, "step": 8 },
+    "expectedStylePerKill": { "base": 15, "step": 1 },
+    "byHeroine": {
+      "genki":   ["kills", "combo", "noHit"],
+      "kuudere": ["kills", "crits", "longShots", "noHit"],
+      "yandere": ["kills", "closeKills", "combo", "noHit"]
+    },
+    "kills":      { "share": 0.6 },
+    "crits":      { "share": 0.5, "minCritChance": 10 },
+    "longShots":  { "share": 0.2 },
+    "closeKills": { "share": 0.2 },
+    "combo":      { "base": 8,  "step": 2, "max": 40 },
+    "noHit":      { "base": 8,  "step": 1, "max": 20 }
+  },
+
+  "shop": {
+    "hp":             { "name": "Здоровье",              "increment": 10, "basePrice": 10, "priceStep": 4 },
+    "damage":         { "name": "Урон",                  "increment": 8,  "basePrice": 12, "priceStep": 5 },
+    "attackSpeed":    { "name": "Скорость атаки",        "increment": 8,  "basePrice": 12, "priceStep": 5 },
+    "moveSpeed":      { "name": "Скорость передвижения", "increment": 5,  "basePrice": 10, "priceStep": 4 },
+    "range":          { "name": "Дальность атаки",       "increment": 8,  "basePrice": 10, "priceStep": 4 },
+    "armor":          { "name": "Броня",                 "increment": 2,  "basePrice": 12, "priceStep": 5 },
+    "regen":          { "name": "Восстановление",        "increment": 2,  "basePrice": 10, "priceStep": 4 },
+    "crit":           { "name": "Шанс крита",            "increment": 3,  "basePrice": 12, "priceStep": 5 },
+    "resourceSearch": { "name": "Поиск ресурсов",        "increment": 5,  "basePrice": 10, "priceStep": 4 }
+  },
+
+  "chat": {
+    "baseInterval": 1.5, "minInterval": 0.3, "maxMessages": 40,
+    "maxPerSecond": 4, "queueMax": 8, "categoryCooldown": 1.0,
+    "eventChance": { "kill": 0.15, "crit": 0.3, "long_shot": 0.3, "close_kill": 0.3, "player_hit": 0.5 }
+  }
+}

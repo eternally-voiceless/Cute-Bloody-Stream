@@ -1,0 +1,114 @@
+{
+  "portraits": {
+    "genki":   { "base": "assets/img/genki/genki-base-cutout.png",
+                 "selected": "assets/img/genki/genki-selected-cutout.png",
+                 "background": "assets/img/genki/genki-selected-background.png" },
+    "kuudere": { "base": "assets/img/kuudere/kuudere-base-cutout.png",
+                 "selected": "assets/img/kuudere/kuudere-selected-cutout.png",
+                 "background": "assets/img/kuudere/kuudere-selected-background.png" },
+    "yandere": { "base": "assets/img/yandere/yandere-base-cutout.png",
+                 "selected": "assets/img/yandere/yandere-selected-cutout.png",
+                 "background": "assets/img/yandere/yandere-selected-background.png" }
+  },
+  "sprites": {
+    "hero_genki": {
+      "sheet": null, "frameWidth": 128, "frameHeight": 128,
+      "scale": 0.75, "origin": [0.5, 0.9], "weaponAnchor": [0, -24],
+      "anims": {
+        "idle_down":  { "frames": [0, 1], "fps": 2 },
+        "idle_up":    { "frames": [2], "fps": 1 },
+        "idle_right": { "frames": [3], "fps": 1 },
+        "move_down":  { "frames": [4, 5, 6, 5], "fps": 8 },
+        "move_up":    { "frames": [7, 8, 9, 8], "fps": 8 },
+        "move_right": { "frames": [10, 11, 12, 11], "fps": 8 }
+      },
+      "mirror": { "idle_left": "idle_right", "move_left": "move_right" }
+    },
+    "hero_kuudere": {
+      "sheet": null, "frameWidth": 128, "frameHeight": 128,
+      "scale": 0.75, "origin": [0.5, 0.9], "weaponAnchor": [0, -24],
+      "anims": {
+        "idle_down":  { "frames": [0, 1], "fps": 2 },
+        "idle_up":    { "frames": [2], "fps": 1 },
+        "idle_right": { "frames": [3], "fps": 1 },
+        "move_down":  { "frames": [4, 5, 6, 5], "fps": 8 },
+        "move_up":    { "frames": [7, 8, 9, 8], "fps": 8 },
+        "move_right": { "frames": [10, 11, 12, 11], "fps": 8 }
+      },
+      "mirror": { "idle_left": "idle_right", "move_left": "move_right" }
+    },
+    "hero_yandere": {
+      "sheet": null, "frameWidth": 128, "frameHeight": 128,
+      "scale": 0.75, "origin": [0.5, 0.9], "weaponAnchor": [0, -24],
+      "anims": {
+        "idle_down":  { "frames": [0, 1], "fps": 2 },
+        "idle_up":    { "frames": [2], "fps": 1 },
+        "idle_right": { "frames": [3], "fps": 1 },
+        "move_down":  { "frames": [4, 5, 6, 5], "fps": 8 },
+        "move_up":    { "frames": [7, 8, 9, 8], "fps": 8 },
+        "move_right": { "frames": [10, 11, 12, 11], "fps": 8 }
+      },
+      "mirror": { "idle_left": "idle_right", "move_left": "move_right" }
+    },
+    "enemy_walker": {
+      "sheet": null, "frameWidth": 96, "frameHeight": 96,
+      "scale": 0.6, "origin": [0.5, 0.9],
+      "anims": {
+        "move_down": { "frames": [0], "fps": 1 }, "move_down_right": { "frames": [1], "fps": 1 },
+        "move_right": { "frames": [2], "fps": 1 }, "move_up_right": { "frames": [3], "fps": 1 },
+        "move_up": { "frames": [4], "fps": 1 }, "attack_right": { "frames": [5], "fps": 1 },
+        "death": { "frames": [6], "fps": 1 }
+      },
+      "mirror": { "move_left": "move_right", "move_down_left": "move_down_right",
+                  "move_up_left": "move_up_right", "attack_left": "attack_right" }
+    },
+    "enemy_runner": {
+      "sheet": null, "frameWidth": 96, "frameHeight": 96,
+      "scale": 0.5, "origin": [0.5, 0.9],
+      "anims": {
+        "move_down": { "frames": [0], "fps": 1 }, "move_down_right": { "frames": [1], "fps": 1 },
+        "move_right": { "frames": [2], "fps": 1 }, "move_up_right": { "frames": [3], "fps": 1 },
+        "move_up": { "frames": [4], "fps": 1 }, "attack_right": { "frames": [5], "fps": 1 },
+        "death": { "frames": [6], "fps": 1 }
+      },
+      "mirror": { "move_left": "move_right", "move_down_left": "move_down_right",
+                  "move_up_left": "move_up_right", "attack_left": "attack_right" }
+    },
+    "enemy_brute": {
+      "sheet": null, "frameWidth": 128, "frameHeight": 128,
+      "scale": 0.8, "origin": [0.5, 0.9],
+      "anims": {
+        "move_down": { "frames": [0], "fps": 1 }, "move_down_right": { "frames": [1], "fps": 1 },
+        "move_right": { "frames": [2], "fps": 1 }, "move_up_right": { "frames": [3], "fps": 1 },
+        "move_up": { "frames": [4], "fps": 1 }, "attack_right": { "frames": [5], "fps": 1 },
+        "death": { "frames": [6], "fps": 1 }
+      },
+      "mirror": { "move_left": "move_right", "move_down_left": "move_down_right",
+                  "move_up_left": "move_up_right", "attack_left": "attack_right" }
+    },
+    "boss_hater": {
+      "sheet": null, "frameWidth": 256, "frameHeight": 256,
+      "scale": 0.8, "origin": [0.5, 0.9],
+      "anims": {
+        "move_down": { "frames": [0], "fps": 1 }, "move_down_right": { "frames": [1], "fps": 1 },
+        "move_right": { "frames": [2], "fps": 1 }, "move_up_right": { "frames": [3], "fps": 1 },
+        "move_up": { "frames": [4], "fps": 1 }, "attack_right": { "frames": [5], "fps": 1 },
+        "telegraph_right": { "frames": [6], "fps": 1 }, "dash_right": { "frames": [7], "fps": 1 },
+        "summon": { "frames": [8], "fps": 1 }, "death": { "frames": [9], "fps": 1 }
+      },
+      "mirror": { "move_left": "move_right", "move_down_left": "move_down_right",
+                  "move_up_left": "move_up_right", "attack_left": "attack_right",
+                  "telegraph_left": "telegraph_right", "dash_left": "dash_right" }
+    },
+    "weapon_rifle":   { "image": null, "scale": 1, "origin": [0.2, 0.5],
+                        "placeholder": { "shape": "rect", "w": 36, "h": 8, "color": "#ffffff" } },
+    "weapon_laser":   { "image": null, "scale": 1, "origin": [0.2, 0.5],
+                        "placeholder": { "shape": "rect", "w": 48, "h": 6, "color": "#7fe7ff" } },
+    "weapon_shotgun": { "image": null, "scale": 1, "origin": [0.2, 0.5],
+                        "placeholder": { "shape": "rect", "w": 34, "h": 12, "color": "#3a3a3a" } }
+  },
+  "images": {
+    "arena_bg": null, "select_bg": null, "coin": null, "spawn_marker": null, "boss_arrow": null,
+    "helicopter": null, "projectile_rifle": null, "projectile_laser": null, "projectile_shotgun": null
+  }
+}
