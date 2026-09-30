@@ -19,6 +19,8 @@ export class Boss {
   flash = 0;
   lastKnockVolley = -1;
   state: BossState = 'chase';
+  /** Выставляется при переходе к предупреждению о рывке; Night читает и сбрасывает (реплика чата). */
+  justTelegraphed = false;
   dashDirX = 0;
   dashDirY = 0;
   private stateT = 0;
@@ -69,6 +71,7 @@ export class Boss {
       this.dashCd -= dt;
       if (this.dashCd <= 0) {
         this.state = 'telegraph';
+        this.justTelegraphed = true;
         this.stateT = c.dash.telegraph;
         this.dashDirX = dx / d;
         this.dashDirY = dy / d;

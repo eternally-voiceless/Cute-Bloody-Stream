@@ -38,7 +38,8 @@ export class FinalScene extends Phaser.Scene {
 
     const chatPanel = new ChatPanel(this, 1556, 22, 344, 600, b.chat.maxMessages);
     this.chat = new ChatSystem(chatPanel, ctx.chat, b, run.heroineId);
-    this.chat.idleCategory = 'final';
+    this.chat.idleCategory = '';   // фон — отдельным таймером с finalInterval
+    this.chat.setState(() => ({ heroineId: run.heroineId, stream: 20 }));
     this.chat.event('final');
 
     const heli = this.add.image(cx, -150, imageKey(this, 'helicopter')).setDepth(10000);
@@ -112,7 +113,7 @@ export class FinalScene extends Phaser.Scene {
     const dt = Math.min(dtMs / 1000, 0.05);
     // 3. Чат заполняется финальными сообщениями.
     this.finalTimer += dt;
-    if (this.finalTimer > 0.5) {
+    if (this.finalTimer > (ctx.balance.chat.finalInterval ?? 0.8)) {
       this.finalTimer = 0;
       this.chat?.event('final');
     }

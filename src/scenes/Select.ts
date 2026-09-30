@@ -4,7 +4,7 @@ import { colorNum, hasImage, imageKey, portraitKey } from '../systems/assets';
 import { loadProgress } from '../systems/save';
 import { createRun } from '../systems/run';
 import { deriveStats, statRows } from '../systems/stats';
-import { ChatSystem } from '../systems/chat';
+import { ChatSystem, resetChatMemory } from '../systems/chat';
 import { ChatPanel } from '../ui/chatPanel';
 import { button, panel, text } from '../ui/widgets';
 import { HEROINE_IDS, type HeroineId } from '../types';
@@ -187,6 +187,8 @@ export class SelectScene extends Phaser.Scene {
     this.chatPanel = new ChatPanel(this, 1400, 40, 480, 1000, b.chat.maxMessages);
     this.chat = new ChatSystem(this.chatPanel, ctx.chat, b, id);
     this.chat.idleCategory = `select_${id}`;
+    const cleared = loadProgress().completed[id];
+    this.chat.setState(() => ({ heroineId: id, cleared }));
     this.chat.event(`select_${id}`);
     this.chatPanel.setAlpha(0);
 
@@ -230,6 +232,7 @@ export class SelectScene extends Phaser.Scene {
     this.busy = true;
     const d = ctx.debug;
     ctx.run = createRun(ctx.balance, id, d.stream ?? 1, d.coins ?? 0);
+    resetChatMemory();
     this.cameras.main.fadeOut(300);
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => this.scene.start('Night'));
   }

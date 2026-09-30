@@ -133,19 +133,18 @@
       }
     },
     "enemy_brute": {
-      "sheet": null,
-      "frameWidth": 128,
-      "frameHeight": 128,
-      "scale": 0.8,
-      "origin": [0.5, 0.9],
+      "sheet": "assets/sprites/enemy_brute.png",
+      "frameWidth": 256,
+      "frameHeight": 256,
+      "scale": 0.62,
+      "origin": [0.5, 0.78],
       "anims": {
         "move_down": {"frames": [0], "fps": 1},
-        "move_down_right": {"frames": [1], "fps": 1},
+        "move_up": {"frames": [1], "fps": 1},
         "move_right": {"frames": [2], "fps": 1},
-        "move_up_right": {"frames": [3], "fps": 1},
-        "move_up": {"frames": [4], "fps": 1},
-        "attack_right": {"frames": [5], "fps": 1},
-        "death": {"frames": [6], "fps": 1}
+        "move_down_right": {"frames": [2], "fps": 1},
+        "move_up_right": {"frames": [2], "fps": 1},
+        "attack_right": {"frames": [2], "fps": 1}
       },
       "mirror": {
         "move_left": "move_right",
@@ -155,22 +154,22 @@
       }
     },
     "boss_hater": {
-      "sheet": null,
-      "frameWidth": 256,
-      "frameHeight": 256,
-      "scale": 0.8,
-      "origin": [0.5, 0.9],
+      "sheet": "assets/sprites/boss_hater.png",
+      "frameWidth": 384,
+      "frameHeight": 384,
+      "scale": 0.95,
+      "origin": [0.5, 0.78],
       "anims": {
         "move_down": {"frames": [0], "fps": 1},
-        "move_down_right": {"frames": [1], "fps": 1},
+        "move_up": {"frames": [1], "fps": 1},
         "move_right": {"frames": [2], "fps": 1},
-        "move_up_right": {"frames": [3], "fps": 1},
-        "move_up": {"frames": [4], "fps": 1},
-        "attack_right": {"frames": [5], "fps": 1},
-        "telegraph_right": {"frames": [6], "fps": 1},
-        "dash_right": {"frames": [7], "fps": 1},
-        "summon": {"frames": [8], "fps": 1},
-        "death": {"frames": [9], "fps": 1}
+        "move_down_right": {"frames": [2], "fps": 1},
+        "move_up_right": {"frames": [2], "fps": 1},
+        "attack_right": {"frames": [2], "fps": 1},
+        "telegraph_right": {"frames": [2], "fps": 1},
+        "dash_right": {"frames": [2], "fps": 1},
+        "summon": {"frames": [0], "fps": 1},
+        "death": {"frames": [0], "fps": 1}
       },
       "mirror": {
         "move_left": "move_right",

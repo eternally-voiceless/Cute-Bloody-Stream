@@ -16,24 +16,29 @@ export class ChatPanel {
 
   constructor(scene: Phaser.Scene, x: number, y: number, w: number, h: number, maxMessages: number, title = 'Чат стрима') {
     this.maxMessages = maxMessages;
+    // Phaser при отрисовке ставит корню DOMElement `display: block`, поэтому flex-панель — внутри обёртки.
     const root = document.createElement('div');
-    root.className = 'chat';
     root.style.width = `${w}px`;
     root.style.height = `${h}px`;
-    root.innerHTML = `<div class="chat-head"><span class="live-dot"></span>${title}</div><div class="chat-list"></div>`;
-    this.list = root.querySelector('.chat-list') as HTMLDivElement;
+    const chat = document.createElement('div');
+    chat.className = 'chat';
+    chat.style.width = '100%';
+    chat.style.height = '100%';
+    chat.innerHTML = `<div class="chat-head"><span class="live-dot"></span>${title}</div><div class="chat-list"></div>`;
+    root.append(chat);
+    this.list = chat.querySelector('.chat-list') as HTMLDivElement;
     this.dom = scene.add.dom(x, y, root).setOrigin(0, 0).setScrollFactor(0).setDepth(1000);
     // Клики проходят сквозь панель к игре; колесо ловит только список (.chat-list в index.html).
     this.dom.pointerEvents = 'none';
   }
 
-  add(nick: string, text: string, highlight = false): void {
+  add(nick: string, text: string, highlight = false, badge?: string): void {
     const row = document.createElement('div');
     row.className = highlight ? 'chat-msg hl' : 'chat-msg';
     const n = document.createElement('span');
     n.className = 'nick';
     n.style.color = nickColor(nick);
-    n.textContent = nick;
+    n.textContent = badge ? `${badge} ${nick}` : nick;
     const t = document.createElement('span');
     t.textContent = ` ${text}`;
     row.append(n, t);

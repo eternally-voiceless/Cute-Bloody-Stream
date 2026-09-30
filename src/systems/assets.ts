@@ -202,10 +202,12 @@ export function dir4(dx: number, dy: number): Dir4 {
 
 const DEFAULT_BOB: BobSpec = { amp: 5, freq: 14, squash: 0.06 };
 
-/** Ключ спрайта с учётом вариантов: `variants` → случайный из списка. */
-export function resolveVariant(spriteKey: string): string {
+/** Ключ спрайта с учётом вариантов: `variants` → случайный из списка. index — номер варианта с 1 (1, если вариантов нет). */
+export function resolveVariant(spriteKey: string): { key: string; index: number } {
   const v = spriteSpec(spriteKey).variants;
-  return v && v.length > 0 ? v[Math.floor(Math.random() * v.length)] : spriteKey;
+  if (!v || v.length === 0) return { key: spriteKey, index: 1 };
+  const i = Math.floor(Math.random() * v.length);
+  return { key: v[i], index: i + 1 };
 }
 
 /**
@@ -224,9 +226,11 @@ export class SpriteView extends Phaser.GameObjects.Sprite {
   private idleT = Math.random() * 10;
   /** Текущее смещение по Y от покачивания (для точки крепления оружия). */
   bobOffset = 0;
+  /** Номер варианта внешности с 1 (для реплик чата про конкретный вид врага). */
+  readonly variant: number;
 
   constructor(scene: Phaser.Scene, x: number, y: number, key: string, fallback: PlaceholderSpec) {
-    const spriteKey = resolveVariant(key);
+    const { key: spriteKey, index: variant } = resolveVariant(key);
     const spec = spriteSpec(spriteKey);
     const tex = spriteTexKey(spriteKey);
     const loaded = scene.textures.exists(tex);
@@ -237,6 +241,7 @@ export class SpriteView extends Phaser.GameObjects.Sprite {
     }
     super(scene, x, y, texture, loaded && spec.sheet ? 0 : undefined);
     this.spriteKey = spriteKey;
+    this.variant = variant;
     this.spec = spec;
     this.isPlaceholder = !loaded;
     if (loaded) {

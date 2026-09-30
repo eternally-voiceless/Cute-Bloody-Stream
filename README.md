@@ -64,7 +64,7 @@ src/ui/        HUD, чат (DOM), виджеты, цифры урона
 python ../tools/prepare_sprites.py   # из game/, или python tools/prepare_sprites.py из корня
 ```
 
-Нужны Pillow, numpy, scipy. Скрипт находит три фигуры (даже если они касаются), ставит их в кадры 256×256 в одном масштабе с общей линией ног и пишет листы 768×256 в `public/assets/sprites/`. Новый лист добавляется в словарь `SHEETS` (оружие — в `WEAPONS`) в начале скрипта, затем в `assets.json`.
+Нужны Pillow, numpy, scipy. Скрипт находит три фигуры (даже если они касаются), ставит их в кадры 256×256 в одном масштабе с общей линией ног и пишет листы 768×256 в `public/assets/sprites/`. Для крупных фигур размер кадра задаётся в `SHEETS` парой `(имя, кадр)` — так босс идёт кадрами 384×384. Новый лист добавляется в словарь `SHEETS` (оружие — в `WEAPONS`) в начале скрипта, затем в `assets.json`.
 
 Конфиги грузятся при запуске. Правка `balance.json`, `chat.json` или `assets.json` в собранной игре (`dist/config/`) применяется после перезагрузки страницы.
 
@@ -240,21 +240,46 @@ python ../tools/prepare_sprites.py   # из game/, или python tools/prepare_s
 | `maxPerSecond` | Лимит обычных сообщений в секунду |
 | `queueMax` | Длина очереди; при переполнении отбрасываются фоновые, затем самые старые |
 | `categoryCooldown` | Минимум секунд между сообщениями одной частой категории |
-| `eventChance.<cat>` | Вероятность сообщения на частое событие (`kill`, `crit`, `long_shot`, `close_kill`, `player_hit`) |
+| `eventChance.<cat>` | Вероятность сообщения на частое событие (`kill`, `crit`, `long_shot`, `close_kill`, `player_hit`, `boss_dash`, `boss_summon`, `low_hp_ok`) |
+| `cooldowns.<cat>` | Свой кулдаун категории вместо `categoryCooldown` |
+| `rankUpChance.<rank>` | Вероятность реплики о новом ранге HYPE (нет в таблице — 1) |
+| `recentTextMemory` | Сколько последних строк не повторяются |
+| `recentAuthorMemory` | Сколько последних авторов помнит чат (к ним чаще обращаются, их реже выбирают автором) |
+| `regularShare` | Доля обычных реплик, которые пишут завсегдатаи |
+| `mentionRecentShare` | Доля обращений `{nick}` к недавно писавшим |
+| `reply.maxDepth`, `reply.maxPending` | Глубина цепочки ответов и сколько ответов может ждать одновременно |
+| `burst.<cat>`, `burstGap` | Сколько зрителей пишут на крупное событие и интервал между ними, с |
+| `finalInterval` | Период сообщений в финале, с |
+| `taskNearRatio`, `taskNearMinTarget` | «Задание почти выполнено»: доля прогресса и минимальная цель |
+| `lowHpOkRatio` | Доля HP, после которой чат пишет «выдохнули» и снова может предупредить о низком HP |
+| `comboLostMin` | С какой длины серии чат жалеет о её потере от удара |
+| `viewersMilestones` | Рубежи зрителей, о которых чат пишет один раз за забег |
 
-Сообщения высокого приоритета (`boss_spawn`, `boss_kill`, `task_new`, `task_done`, `task_failed`, `low_hp`, `death`, `final`, `stream_end`) обходят лимит и подсвечиваются.
+Сообщения высокого приоритета (`boss_spawn`, `boss_kill`, `task_new`, `task_done`, `task_failed`, `low_hp`, `death`, `final`, `stream_end`, `goal_reached`) обходят лимит и подсвечиваются.
 
 ---
 
 ## `chat.json`
 
-```json
-{ "nicks": ["..."], "messages": { "<категория>": ["..."], "<категория>_<heroineId>": ["..."] } }
+Формат v2 полностью описан в `../chat-proposal/CHAT-LOGIC.md`. Кратко:
+
+```jsonc
+{
+  "stages": { "early": [1, 5], "mid": [6, 14], "late": [15, 19], "last": [20, 20] },
+  "bunkers": { "min": 1, "max": 99 },
+  "layers": { "default": { "heroine": 0.4, "enemy": 0.5, "task": 0.5 }, "kill": { "enemy": 0.55, "heroine": 0.15 } },
+  "nicks": ["..."],
+  "regulars": [ { "nick": "ShelterMod", "tags": ["mod"], "bunker": 1, "weight": 2, "badge": "🛡️" } ],
+  "messages": {
+    "idle": [ "строка", { "text": "...", "if": { "stage": "late" }, "weight": 0.5, "by": "food", "reply": "food_chain" } ],
+    "kill_walker": [ { "text": "офисный — уволен", "if": { "variant": 1 } } ]
+  },
+  "replies": { "hello_back": { "who": "nick", "chance": 0.85, "delay": [1, 2], "lines": ["о, {nick}! привет"] } }
+}
 ```
 
-- Подстановки: `{nick}` — случайный ник, `{n}` — номер стрима или длина серии.
-- Вариант `<категория>_<heroineId>` (например `kill_yandere`) используется вместо общего, если он есть.
-- Категории: `select_<id>`, `idle`, `stream_start`, `kill`, `combo`, `crit`, `long_shot`, `close_kill`, `player_hit`, `low_hp`, `task_new`, `task_done`, `task_failed`, `boss_spawn`, `boss_kill`, `stream_end`, `death`, `final`.
+- Старый формат (только `nicks` и строки в `messages`) тоже работает: без `layers` вариант героини просто заменяет общую категорию.
+- Неизвестная переменная или условие — предупреждение в консоли, строка не ломает игру.
 
 ---
 

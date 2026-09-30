@@ -58,3 +58,12 @@ export function taskProgressText(t: TaskState): string {
   const p = Math.min(t.target, Math.floor(t.progress));
   return `${taskText(t)}: ${p} / ${t.target}${t.completed ? ' ✓' : ''}`;
 }
+
+/** Русское склонение после числа: plural(1, 'монета', 'монеты', 'монет'). */
+export function plural(n: number, one: string, few: string, many: string): string {
+  const m10 = n % 10;
+  const m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return one;
+  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few;
+  return many;
+}

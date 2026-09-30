@@ -105,12 +105,63 @@ export interface Balance {
     baseInterval: number; minInterval: number; maxMessages: number;
     maxPerSecond: number; queueMax: number; categoryCooldown: number;
     eventChance: Record<string, number>;
+    cooldowns?: Record<string, number>;
+    rankUpChance?: Record<string, number>;
+    recentTextMemory?: number;
+    recentAuthorMemory?: number;
+    regularShare?: number;
+    mentionRecentShare?: number;
+    reply?: { maxDepth: number; maxPending: number };
+    burst?: Record<string, number>;
+    burstGap?: [number, number];
+    finalInterval?: number;
+    taskNearRatio?: number;
+    taskNearMinTarget?: number;
+    lowHpOkRatio?: number;
+    comboLostMin?: number;
+    viewersMilestones?: number[];
   };
 }
 
+// chat.json v2 (chat-proposal/CHAT-LOGIC.md). Строка в messages = { text }.
+export interface ChatEntryObj {
+  text: string;
+  weight?: number;
+  once?: boolean;
+  if?: Record<string, unknown>;
+  by?: string;
+  nick?: 'donor';
+  reply?: string;
+}
+export type ChatEntry = string | ChatEntryObj;
+
+export interface ChatReplyPool {
+  who: string;                 // nick | back | other | tag:<тег>
+  chance: number;
+  delay: [number, number];
+  mute?: 'stream' | 'run';
+  lines: ChatEntry[];
+}
+
+export interface ChatRegular {
+  nick: string;
+  tags: string[];
+  bunker: number | null;
+  weight?: number;
+  badge?: string;
+  generic?: boolean;
+  manner?: string;
+}
+
 export interface ChatConfig {
+  version?: number;
+  stages?: Record<string, [number, number]>;
+  bunkers?: { min: number; max: number };
+  layers?: Record<string, Record<string, number>>;
   nicks: string[];
-  messages: Record<string, string[]>;
+  regulars?: ChatRegular[];
+  messages: Record<string, ChatEntry[]>;
+  replies?: Record<string, ChatReplyPool>;
 }
 
 export interface PlaceholderSpec {

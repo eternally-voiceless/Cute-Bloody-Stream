@@ -98,6 +98,18 @@
   "chat": {
     "baseInterval": 1.5, "minInterval": 0.3, "maxMessages": 40,
     "maxPerSecond": 4, "queueMax": 8, "categoryCooldown": 1.0,
-    "eventChance": { "kill": 0.15, "crit": 0.3, "long_shot": 0.3, "close_kill": 0.3, "player_hit": 0.5 }
+    "eventChance": { "kill": 0.15, "crit": 0.3, "long_shot": 0.3, "close_kill": 0.3, "player_hit": 0.5,
+                     "boss_dash": 0.6, "boss_summon": 0.7, "low_hp_ok": 0.7 },
+    "cooldowns": { "boss_dash": 4, "boss_summon": 4 },
+    "rankUpChance": { "C": 0.4, "B": 0.7 },
+    "recentTextMemory": 60, "recentAuthorMemory": 8,
+    "regularShare": 0.2, "mentionRecentShare": 0.6,
+    "reply": { "maxDepth": 2, "maxPending": 3 },
+    "burst": { "death": 4, "boss_kill": 3, "boss_spawn": 2, "stream_end": 2 },
+    "burstGap": [0.25, 0.45],
+    "finalInterval": 0.8,
+    "taskNearRatio": 0.75, "taskNearMinTarget": 4,
+    "lowHpOkRatio": 0.6, "comboLostMin": 10,
+    "viewersMilestones": [50, 100, 250, 500, 1000, 2500, 5000]
   }
 }

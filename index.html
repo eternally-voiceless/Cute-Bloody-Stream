@@ -21,9 +21,10 @@
         display: flex; align-items: center; gap: 8px;
       }
       .live-dot { width: 10px; height: 10px; border-radius: 50%; background: #ff2a4a; box-shadow: 0 0 8px #ff2a4a; }
-      /* Список прокручивается колесом мыши; прижат к низу через margin-top: auto у первого сообщения. */
+      /* Список прокручивается колесом мыши; прижат к низу через margin-top: auto у первого сообщения.
+         min-height: 0 обязателен: без него flex-элемент растягивается под содержимое и не прокручивается. */
       .chat-list {
-        flex: 1; overflow-y: auto; overflow-x: hidden; padding: 8px 12px; display: flex; flex-direction: column;
+        flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 8px 12px; display: flex; flex-direction: column;
         pointer-events: auto; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
       }
       .chat-list > :first-child { margin-top: auto; }

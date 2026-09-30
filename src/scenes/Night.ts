@@ -4,10 +4,11 @@ import { imageKey } from '../systems/assets';
 import { createStream, threshold, viewers } from '../systems/run';
 import { deriveStats, type DerivedStats } from '../systems/stats';
 import { hypeRank, killFlags, killStyle, type KillFlags } from '../systems/style';
-import { taskText } from '../systems/tasks';
+import { plural, taskText } from '../systems/tasks';
 import { SpawnSystem } from '../systems/spawn';
 import { Blood } from '../systems/blood';
-import { ChatSystem } from '../systems/chat';
+import { ChatSystem, takeViewersMilestone, type ChatState } from '../systems/chat';
+import { loadProgress } from '../systems/save';
 import { Player } from '../entities/Player';
 import { Enemy } from '../entities/Enemy';
 import { Boss } from '../entities/Boss';
@@ -48,6 +49,10 @@ export class NightScene extends Phaser.Scene {
   private comboTimer = 0;
   private noHitTimer = 0;
   private lowHpWarned = false;
+  private donor = '';
+  private taskNearSent = false;
+  private bossHalfSent = false;
+  private cleared = false;
   private overlay: Phaser.GameObjects.GameObject[] = [];
   private introDom: Phaser.GameObjects.DOMElement | null = null;
 
@@ -67,6 +72,8 @@ export class NightScene extends Phaser.Scene {
     this.comboTimer = 0;
     this.noHitTimer = 0;
     this.lowHpWarned = false;
+    this.taskNearSent = false;
+    this.bossHalfSent = false;
     this.overlay = [];
     this.introDom = null;
 
@@ -95,6 +102,10 @@ export class NightScene extends Phaser.Scene {
 
     this.chatPanel = new ChatPanel(this, 1556, 22, 344, 600, b.chat.maxMessages);
     this.chat = new ChatSystem(this.chatPanel, ctx.chat, b, this.run.heroineId);
+    // Один донатер на карточку и чат.
+    this.donor = ctx.chat.nicks[Math.floor(Math.random() * ctx.chat.nicks.length)] ?? 'viewer';
+    this.cleared = loadProgress().completed[this.run.heroineId];
+    this.chat.setState(() => this.chatState());
     this.hud = new Hud(this);
 
     const kb = this.input.keyboard!;
@@ -116,14 +127,13 @@ export class NightScene extends Phaser.Scene {
 
   private showIntro(): void {
     const t = this.st.task;
-    const nick = ctx.chat.nicks[Math.floor(Math.random() * ctx.chat.nicks.length)] ?? 'viewer';
     const el = document.createElement('div');
     el.className = 'donation';
     el.innerHTML =
       `<div class="d-head">Стрим ${this.run.stream} / ${STREAMS}${this.st.isBossStream ? ' · БОСС' : ''}</div>` +
-      `<div class="d-nick"></div><div class="d-amount">${t.reward} монет</div>` +
+      `<div class="d-nick"></div><div class="d-amount">${t.reward} ${plural(t.reward, 'монета', 'монеты', 'монет')}</div>` +
       `<div class="d-text"></div><div class="d-hint">Нажмите любую клавишу</div>`;
-    (el.querySelector('.d-nick') as HTMLElement).textContent = `${nick} задонатил(а)`;
+    (el.querySelector('.d-nick') as HTMLElement).textContent = `донат от ${this.donor}`;
     (el.querySelector('.d-text') as HTMLElement).textContent = taskText(t);
     this.introDom = this.add.dom(960, 500, el).setOrigin(0.5).setScrollFactor(0).setDepth(2000);
     this.introDom.pointerEvents = 'none';  // клик по карточке тоже запускает бой
@@ -182,7 +192,10 @@ export class NightScene extends Phaser.Scene {
     p.move(dt, ix, iy);
     p.tick(dt);
     if (p.hp < this.stats.maxHp) p.hp = Math.min(this.stats.maxHp, p.hp + this.stats.regenPerSec * dt);
-    if (this.lowHpWarned && p.hp >= this.stats.maxHp * b.player.lowHpRatio) this.lowHpWarned = false;
+    if (this.lowHpWarned && p.hp >= this.stats.maxHp * (b.chat.lowHpOkRatio ?? b.player.lowHpRatio)) {
+      this.lowHpWarned = false;
+      this.chat.event('low_hp_ok');
+    }
 
     let alive = 0;
     for (const e of this.enemies) {
@@ -199,6 +212,10 @@ export class NightScene extends Phaser.Scene {
       if (boss.dying) boss.updateDying(dt);
       else {
         if (boss.update(dt, p.x, p.y, p.radius)) alive += this.summon(alive);
+        if (boss.justTelegraphed) {
+          boss.justTelegraphed = false;
+          this.chat.event('boss_dash');
+        }
         boss.sync(dt);
       }
     }
@@ -216,6 +233,7 @@ export class NightScene extends Phaser.Scene {
     if (st.task.type === 'noHit' && this.taskOpen()) {
       this.noHitTimer += dt;
       st.task.progress = this.noHitTimer;
+      this.checkTaskNear();
       this.checkTask();
     }
     this.updateCoins(dt);
@@ -315,6 +333,7 @@ export class NightScene extends Phaser.Scene {
       const d = boss.radius + 40;
       this.spawnEnemy('walker', boss.x + Math.cos(ang) * d, boss.y + Math.sin(ang) * d, true);
     }
+    if (n > 0) this.chat.event('boss_summon');
     return n;
   }
 
@@ -440,6 +459,10 @@ export class NightScene extends Phaser.Scene {
       t.lastKnockVolley = pr.volley;
       (t as Enemy).knock(pr.dirX, pr.dirY, w.knockback);
     }
+    if (t.isBoss && !this.bossHalfSent && t.hp > 0 && t.hp <= this.b.boss.hp / 2) {
+      this.bossHalfSent = true;
+      this.chat.event('boss_half');
+    }
     if (t.hp <= 0) this.onKill(t, crit, pr.dirX, pr.dirY);
   }
 
@@ -478,16 +501,21 @@ export class NightScene extends Phaser.Scene {
       enemyStyle: e.style, crit, dist, range: this.stats.range, combo: st.combo,
     });
     st.kills++;
+    const rankBefore = hypeRank(this.b, st.combo).index;
     st.combo++;
+    const rankAfter = hypeRank(this.b, st.combo);
     this.comboTimer = this.b.style.comboWindow;
     if (this.taskOpen()) this.advanceTask(flags);
     if (Math.random() * 100 < this.stats.dropChance) this.dropCoin(e.x, e.y);
 
-    this.chat.event('kill');
-    if (flags.crit) this.chat.event('crit');
-    if (flags.longShot) this.chat.event('long_shot');
-    if (flags.close) this.chat.event('close_kill');
-    if (st.combo > 0 && st.combo % 10 === 0) this.chat.event('combo', { n: st.combo });
+    const ev = { enemyId: e.typeId, variant: e.view.variant };
+    this.chat.event('kill', ev);
+    if (flags.crit) this.chat.event('crit', ev);
+    if (flags.longShot) this.chat.event('long_shot', ev);
+    if (flags.close) this.chat.event('close_kill', ev);
+    const rankUp = rankAfter.index > rankBefore;
+    if (rankUp) this.chat.event('rank_up', { rank: rankAfter.rank });
+    else if (st.combo > 0 && st.combo % 10 === 0) this.chat.event('combo', { n: st.combo, combo: st.combo });
     this.checkThreshold();
   }
 
@@ -501,7 +529,18 @@ export class NightScene extends Phaser.Scene {
       case 'combo': t.progress = Math.max(t.progress, this.st.combo); break;
       case 'noHit': break;
     }
+    this.checkTaskNear();
     this.checkTask();
+  }
+
+  /** Задание почти выполнено: реплика чата один раз за стрим. */
+  private checkTaskNear(): void {
+    const t = this.st.task;
+    const c = this.b.chat;
+    if (this.taskNearSent || t.completed || t.target < (c.taskNearMinTarget ?? 4)) return;
+    if (t.progress / t.target < (c.taskNearRatio ?? 0.75) || t.progress >= t.target) return;
+    this.taskNearSent = true;
+    this.chat.event('task_near');
   }
 
   private checkTask(): void {
@@ -520,6 +559,7 @@ export class NightScene extends Phaser.Scene {
     if (st.thresholdReached || st.styleRaw < threshold(this.b, this.run.stream)) return;
     st.thresholdReached = true;
     if (st.isBossStream) this.spawn.stop();
+    if (st.isBossStream && !st.bossDead) this.chat.event('goal_reached');
   }
 
   // ---------- монеты ----------
@@ -568,11 +608,12 @@ export class NightScene extends Phaser.Scene {
     p.hp -= hitBy.damage * this.stats.armorFactor;
     p.invul = this.b.player.invulnerability;
     this.blood.hit(p.x, p.y, p.x - hitBy.x, p.y - hitBy.y);
+    if (this.st.combo >= (this.b.chat.comboLostMin ?? 10)) this.chat.event('combo_lost', { combo: this.st.combo });
     this.st.combo = 0;
     this.noHitTimer = 0;
     if (this.st.task.type === 'noHit' && this.taskOpen()) this.st.task.progress = 0;
     this.cameras.main.shake(120, 0.004);
-    this.chat.event('player_hit');
+    this.chat.event('player_hit', { enemyId: hitBy.isBoss ? 'boss_hater' : (hitBy as Enemy).typeId });
     if (!this.lowHpWarned && p.hp > 0 && p.hp < this.stats.maxHp * this.b.player.lowHpRatio) {
       this.lowHpWarned = true;
       this.chat.event('low_hp');
@@ -648,6 +689,7 @@ export class NightScene extends Phaser.Scene {
 
   private onDeath(): void {
     this.ended = true;
+    this.chat.cancelPending();
     this.chat.event('death');
     this.player.setVisible(false);
     this.blood.kill(this.player.x, this.player.y, 0, 1, 2.5);
@@ -700,6 +742,27 @@ export class NightScene extends Phaser.Scene {
 
   // ---------- HUD и эффекты ----------
 
+  private chatState(): ChatState {
+    const st = this.st;
+    const boss = this.boss;
+    const hype = hypeRank(this.b, st.combo);
+    return {
+      heroineId: this.run.heroineId,
+      cleared: this.cleared,
+      stream: this.run.stream,
+      isBossStream: st.isBossStream,
+      bossAlive: !!boss && boss.active && !boss.dying,
+      hpRatio: this.player.hp / this.stats.maxHp,
+      combo: st.combo,
+      rank: hype.rank,
+      rankIndex: hype.index,
+      viewers: viewers(this.b, this.run),
+      kills: st.kills,
+      task: st.task,
+      donor: this.donor,
+    };
+  }
+
   private updateHud(): void {
     const st = this.st;
     const boss = this.boss;
@@ -724,6 +787,10 @@ export class NightScene extends Phaser.Scene {
       isBossStream: st.isBossStream,
     });
     this.updateBossArrow();
+    if (st.phase === 'fight') {
+      const m = takeViewersMilestone(this.b, viewers(this.b, this.run));
+      if (m !== null) this.chat.event('viewers_milestone', { viewers: m });
+    }
     if (ctx.debug.enabled) {
       this.hud.debugText.setText(
         `FPS ${Math.round(this.game.loop.actualFps)} · врагов ${this.aliveCount()} · ${Math.round(st.elapsed)} с · F9 — завершить стрим`,
