@@ -50,15 +50,17 @@
     "dash":   { "cooldown": 6, "telegraph": 1, "speed": 700, "distance": 600 },
     "summon": { "cooldown": 8, "count": 5 }
   },
-  "scaling": { "hpPerStream": 0.12, "damagePerStream": 0.08 },
+  "scaling": { "hpPerStream": 0.07, "damagePerStream": 0.08 },
 
-  "spawn": { "interval": 2.0, "intervalStep": 0.063, "minInterval": 0.8,
-             "group": 3, "groupEvery": 7, "minDistance": 400, "telegraph": 1, "maxAlive": 200 },
+  "spawn": { "interval": 1.3, "intervalStep": 0.117, "minInterval": 0.8,
+             "group": 3, "groupEvery": 10, "minDistance": 400, "telegraph": 1, "maxAlive": 200 },
 
   "style": {
     "threshold": { "base": 500, "step": 550 },
     "comboWindow": 2, "comboStep": 0.05, "comboCap": 40,
-    "critBonus": 5, "longShotRatio": 0.8, "longShotBonus": 8, "closeDistance": 90, "closeBonus": 8
+    "critBonus": 5, "longShotRatio": 0.8, "longShotBonus": 8, "closeDistance": 90, "closeBonus": 8,
+    "hype": [ { "rank": "D", "combo": 0 }, { "rank": "C", "combo": 5 }, { "rank": "B", "combo": 10 },
+              { "rank": "A", "combo": 20 }, { "rank": "S", "combo": 30 }, { "rank": "SS", "combo": 40 } ]
   },
   "viewers": { "base": 12, "perStyle": 0.05 },
 
@@ -67,7 +69,7 @@
 
   "tasks": {
     "reward": { "base": 8, "step": 8 },
-    "expectedStylePerKill": { "base": 15, "step": 1 },
+    "expectedStylePerKill": { "base": 20, "step": 2 },
     "byHeroine": {
       "genki":   ["kills", "combo", "noHit"],
       "kuudere": ["kills", "crits", "longShots", "noHit"],

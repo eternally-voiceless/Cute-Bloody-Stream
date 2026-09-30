@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import type { AssetsConfig, PlaceholderSpec, SpriteSpec } from '../types';
+import type { AssetsConfig, BobSpec, PlaceholderSpec, SpriteSpec } from '../types';
 import { HEROINE_IDS } from '../types';
 import { ctx } from './context';
 
@@ -29,6 +29,9 @@ export function validateAssets(a: AssetsConfig): void {
     }
   }
   for (const k of REQUIRED_SPRITES) if (!a.sprites?.[k]) console.warn(`[assets] нет sprites.${k}`);
+  for (const [k, spec] of Object.entries(a.sprites ?? {})) {
+    for (const v of spec.variants ?? []) if (!a.sprites[v]) console.warn(`[assets] sprites.${k}.variants: нет sprites.${v}`);
+  }
   for (const k of REQUIRED_IMAGES) if (!(k in (a.images ?? {}))) console.warn(`[assets] нет images.${k}`);
 }
 
@@ -197,17 +200,33 @@ export function dir4(dx: number, dy: number): Dir4 {
   return dy < 0 ? 'up' : 'down';
 }
 
+const DEFAULT_BOB: BobSpec = { amp: 5, freq: 14, squash: 0.06 };
+
+/** Ключ спрайта с учётом вариантов: `variants` → случайный из списка. */
+export function resolveVariant(spriteKey: string): string {
+  const v = spriteSpec(spriteKey).variants;
+  return v && v.length > 0 ? v[Math.floor(Math.random() * v.length)] : spriteKey;
+}
+
 /**
  * Спрайт с единым интерфейсом для листа, картинки и плейсхолдера (ТЗ, 3.1).
  * Цепочка отката: анимация → зеркальная пара → idle_<dir> → idle_down → кадр 0 → плейсхолдер.
+ * Шаг при ходьбе изображается кодом: подпрыгивание и лёгкое сжатие (`bob`).
  */
 export class SpriteView extends Phaser.GameObjects.Sprite {
   readonly spriteKey: string;
   readonly spec: SpriteSpec;
   readonly isPlaceholder: boolean;
   private current = '';
+  private baseScale = 1;
+  private phase = Math.random() * Math.PI * 2;
+  private walk = 0;       // 0…1, плавный переход между стоянием и ходьбой
+  private idleT = Math.random() * 10;
+  /** Текущее смещение по Y от покачивания (для точки крепления оружия). */
+  bobOffset = 0;
 
-  constructor(scene: Phaser.Scene, x: number, y: number, spriteKey: string, fallback: PlaceholderSpec) {
+  constructor(scene: Phaser.Scene, x: number, y: number, key: string, fallback: PlaceholderSpec) {
+    const spriteKey = resolveVariant(key);
     const spec = spriteSpec(spriteKey);
     const tex = spriteTexKey(spriteKey);
     const loaded = scene.textures.exists(tex);
@@ -223,7 +242,8 @@ export class SpriteView extends Phaser.GameObjects.Sprite {
     if (loaded) {
       const o = spec.origin ?? [0.5, 0.5];
       this.setOrigin(o[0], o[1]);
-      this.setScale(spec.scale ?? 1);
+      this.baseScale = spec.scale ?? 1;
+      this.setScale(this.baseScale);
     } else {
       this.setOrigin(0.5, 0.5);
     }
@@ -232,6 +252,25 @@ export class SpriteView extends Phaser.GameObjects.Sprite {
 
   get weaponAnchor(): [number, number] {
     return this.spec.weaponAnchor ?? [0, 0];
+  }
+
+  /** Ставит спрайт в точку с покачиванием: при ходьбе — шаги, на месте — лёгкое дыхание. */
+  place(x: number, y: number, moving: boolean, dt: number): void {
+    if (this.isPlaceholder) {
+      this.bobOffset = 0;
+      this.setPosition(x, y);
+      return;
+    }
+    const b = this.spec.bob ?? DEFAULT_BOB;
+    this.walk += ((moving ? 1 : 0) - this.walk) * Math.min(1, dt * 10);
+    if (moving) this.phase += dt * b.freq;
+    this.idleT += dt;
+    const step = Math.abs(Math.sin(this.phase));
+    const breathe = (1 - this.walk) * 0.015 * Math.sin(this.idleT * 3);
+    const squash = this.walk * b.squash * (1 - step);
+    this.bobOffset = -step * b.amp * this.walk;
+    this.setScale(this.baseScale * (1 + squash * 0.5), this.baseScale * (1 - squash + breathe));
+    this.setPosition(x, y + this.bobOffset);
   }
 
   private has(name: string): boolean {

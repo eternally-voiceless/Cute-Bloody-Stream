@@ -10,12 +10,15 @@ import { button, panel, text, type Button } from '../ui/widgets';
 // «День» между стримами: магазин улучшений (ТЗ, 4.3, 5.3).
 export class DayScene extends Phaser.Scene {
   private dynamic: Phaser.GameObjects.GameObject[] = [];
+  private menu: Phaser.GameObjects.GameObject[] = [];
 
   constructor() { super('Day'); }
 
   create(): void {
     if (!ctx.run) { this.scene.start('Select'); return; }
     this.dynamic = [];
+    this.menu = [];
+    this.input.keyboard!.on('keydown-ESC', () => this.toggleMenu());
     const g = this.add.graphics();
     g.fillGradientStyle(0x2a1a2e, 0x2a1a2e, 0x0b0b10, 0x0b0b10, 1).fillRect(0, 0, 1920, 1080);
     this.cameras.main.fadeIn(250);
@@ -72,6 +75,25 @@ export class DayScene extends Phaser.Scene {
     }, { color: 0x6a3d9a, size: 24 });
     btn.setEnabled(canBuy(b, run, stat));
     return btn;
+  }
+
+  // Esc: выход в главное меню с подтверждением, забег теряется.
+  private toggleMenu(): void {
+    if (this.menu.length > 0) {
+      for (const o of this.menu) o.destroy();
+      this.menu = [];
+      return;
+    }
+    const add = <T extends Phaser.GameObjects.GameObject>(o: T): T => { this.menu.push(o); return o; };
+    add(this.add.rectangle(960, 540, 1920, 1080, 0x000000, 0.65).setInteractive());
+    add(panel(this, 610, 330, 700, 420, 0.95));
+    add(text(this, 960, 400, 'Выйти в меню?', 48, '#ffffff', { fontStyle: 'bold' }).setOrigin(0.5));
+    add(text(this, 960, 465, 'Забег будет потерян', 26, '#b9b5c9').setOrigin(0.5));
+    add(button(this, 960, 560, 380, 76, 'Продолжить', () => this.toggleMenu()));
+    add(button(this, 960, 660, 380, 64, 'В меню', () => {
+      ctx.run = null;
+      this.scene.start('Select');
+    }, { color: 0x4a4560, size: 26 }));
   }
 
   private startStream(): void {

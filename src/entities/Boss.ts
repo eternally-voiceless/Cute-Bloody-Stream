@@ -105,8 +105,8 @@ export class Boss {
     return false;
   }
 
-  sync(): void {
-    this.view.setPosition(this.x, this.y);
+  sync(dt: number): void {
+    this.view.place(this.x, this.y, this.state !== 'telegraph', dt);
     this.view.setDepth(this.y);
   }
 

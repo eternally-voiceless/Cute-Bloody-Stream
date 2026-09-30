@@ -41,9 +41,17 @@ export class Player {
     this.weapon = makeSpriteImage(scene, `weapon_${stats.weaponId}`, { shape: 'rect', w: 36, h: 8, color: '#ffffff' });
   }
 
+  /** Точка крепления оружия (ось поворота). */
   get muzzle(): { x: number; y: number } {
     const [ax, ay] = this.view.weaponAnchor;
     return { x: this.x + ax, y: this.y + ay };
+  }
+
+  /** Конец ствола при текущем прицеливании — отсюда вылетают снаряды. */
+  get barrelTip(): { x: number; y: number } {
+    const m = this.muzzle;
+    const len = this.weapon.displayWidth * (1 - this.weapon.originX);
+    return { x: m.x + Math.cos(this.aim) * len, y: m.y + Math.sin(this.aim) * len };
   }
 
   move(dt: number, ix: number, iy: number): void {
@@ -69,8 +77,8 @@ export class Player {
     if (this.invul > 0) this.invul = Math.max(0, this.invul - dt);
   }
 
-  sync(): void {
-    this.view.setPosition(this.x, this.y);
+  sync(dt: number): void {
+    this.view.place(this.x, this.y, this.moving, dt);
     this.view.playAnim(`${this.moving ? 'move' : 'idle'}_${this.facing}`);
     this.view.setDepth(this.y);
     // Мигание при неуязвимости.
@@ -84,7 +92,7 @@ export class Player {
       this.arrow.setAlpha(this.view.alpha);
     }
     const m = this.muzzle;
-    this.weapon.setPosition(m.x, m.y);
+    this.weapon.setPosition(m.x, m.y + this.view.bobOffset);
     this.weapon.setRotation(this.aim);
     this.weapon.setFlipY(Math.cos(this.aim) < 0);
     this.weapon.setDepth(this.y + 0.2);

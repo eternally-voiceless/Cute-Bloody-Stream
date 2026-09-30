@@ -34,9 +34,9 @@ export class FinalScene extends Phaser.Scene {
     const stats = deriveStats(b, run.heroineId, run.statPoints);
     this.player = new Player(this, b, run.heroineId, stats, 480, 820);
     this.player.aimAt(1000, 820);
-    this.player.sync();
+    this.player.sync(0);
 
-    const chatPanel = new ChatPanel(this, 1560, 140, 340, 760, b.chat.maxMessages);
+    const chatPanel = new ChatPanel(this, 1556, 22, 344, 600, b.chat.maxMessages);
     this.chat = new ChatSystem(chatPanel, ctx.chat, b, run.heroineId);
     this.chat.idleCategory = 'final';
     this.chat.event('final');
@@ -138,6 +138,6 @@ export class FinalScene extends Phaser.Scene {
     } else {
       p.moving = false;
     }
-    p.sync();
+    p.sync(dt);
   }
 }

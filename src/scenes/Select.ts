@@ -49,6 +49,8 @@ export class SelectScene extends Phaser.Scene {
       const x = 960 - total / 2 + CARD_W / 2 + i * (CARD_W + CARD_GAP);
       this.cards.push({ id, container: this.makeCard(id, x, progress.completed[id]), homeX: x });
     });
+    // Esc в selected_mode — то же, что «Назад».
+    this.input.keyboard!.on('keydown-ESC', () => { if (this.selected.length > 0) this.exitSelected(); });
     this.cameras.main.fadeIn(250);
   }
 

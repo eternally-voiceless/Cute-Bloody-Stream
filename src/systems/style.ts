@@ -30,3 +30,11 @@ export function killStyle(b: Balance, heroineId: HeroineId, k: KillInfo): number
   const comboMult = 1 + Math.min(k.combo, s.comboCap) * s.comboStep * (hm.combo ?? 1);
   return Math.round((k.enemyStyle + bonus) * comboMult);
 }
+
+/** Ранг HYPE по текущей серии: последний ранг, чей порог `combo` достигнут. Возвращает индекс и букву. */
+export function hypeRank(b: Balance, combo: number): { index: number; rank: string } {
+  const list = b.style.hype ?? [];
+  let index = 0;
+  for (let i = 0; i < list.length; i++) if (combo >= list[i].combo) index = i;
+  return { index, rank: list[index]?.rank ?? '' };
+}

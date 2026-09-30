@@ -23,6 +23,8 @@ export class ChatPanel {
     root.innerHTML = `<div class="chat-head"><span class="live-dot"></span>${title}</div><div class="chat-list"></div>`;
     this.list = root.querySelector('.chat-list') as HTMLDivElement;
     this.dom = scene.add.dom(x, y, root).setOrigin(0, 0).setScrollFactor(0).setDepth(1000);
+    // Клики проходят сквозь панель к игре; колесо ловит только список (.chat-list в index.html).
+    this.dom.pointerEvents = 'none';
   }
 
   add(nick: string, text: string, highlight = false): void {
@@ -35,9 +37,12 @@ export class ChatPanel {
     const t = document.createElement('span');
     t.textContent = ` ${text}`;
     row.append(n, t);
-    this.list.append(row);
-    while (this.list.children.length > this.maxMessages) this.list.firstElementChild?.remove();
-    this.list.scrollTop = this.list.scrollHeight;
+    // Если игрок прокрутил чат вверх колесом, новые сообщения не сбивают прокрутку.
+    const l = this.list;
+    const atBottom = l.scrollHeight - l.scrollTop - l.clientHeight < 40;
+    l.append(row);
+    while (l.children.length > this.maxMessages) l.firstElementChild?.remove();
+    if (atBottom) l.scrollTop = l.scrollHeight;
   }
 
   setVisible(v: boolean): void {

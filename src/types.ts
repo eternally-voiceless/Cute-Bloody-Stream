@@ -84,6 +84,7 @@ export interface Balance {
     threshold: Linear;
     comboWindow: number; comboStep: number; comboCap: number;
     critBonus: number; longShotRatio: number; longShotBonus: number; closeDistance: number; closeBonus: number;
+    hype: { rank: string; combo: number }[];
   };
   viewers: { base: number; perStyle: number };
   drops: { coinValue: number; magnetRadius: number; magnetSpeed: number };
@@ -121,7 +122,10 @@ export interface PlaceholderSpec {
 
 export interface AnimSpec { frames: number[]; fps: number }
 
+export interface BobSpec { amp: number; freq: number; squash: number }
+
 export interface SpriteSpec {
+  variants?: string[];
   sheet?: string | null;
   image?: string | null;
   frameWidth?: number;
@@ -132,6 +136,7 @@ export interface SpriteSpec {
   anims?: Record<string, AnimSpec>;
   mirror?: Record<string, string>;
   placeholder?: PlaceholderSpec;
+  bob?: BobSpec;
 }
 
 export interface AssetsConfig {

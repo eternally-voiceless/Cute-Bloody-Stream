@@ -22,6 +22,7 @@ export class Enemy {
   isBoss = false;
   flash = 0;
   lastKnockVolley = -1;
+  moving = false;
   private kbX = 0;
   private kbY = 0;
   private dieT = 0;
@@ -78,6 +79,7 @@ export class Enemy {
     const dy = py - this.y;
     const d = Math.hypot(dx, dy) || 1;
     const touching = d <= this.radius + pr;
+    this.moving = !touching;
     if (!touching) {
       this.x += (dx / d) * this.speed * dt;
       this.y += (dy / d) * this.speed * dt;
@@ -95,8 +97,8 @@ export class Enemy {
     this.view.playAnim(touching ? (dx >= 0 ? 'attack_right' : 'attack_left') : `move_${dir8(dx, dy)}`);
   }
 
-  sync(): void {
-    this.view.setPosition(this.x, this.y);
+  sync(dt: number): void {
+    this.view.place(this.x, this.y, this.moving, dt);
     this.view.setDepth(this.y);
   }
 

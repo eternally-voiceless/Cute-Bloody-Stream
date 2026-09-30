@@ -21,7 +21,12 @@
         display: flex; align-items: center; gap: 8px;
       }
       .live-dot { width: 10px; height: 10px; border-radius: 50%; background: #ff2a4a; box-shadow: 0 0 8px #ff2a4a; }
-      .chat-list { flex: 1; overflow: hidden; padding: 8px 12px; display: flex; flex-direction: column; justify-content: flex-end; }
+      /* Список прокручивается колесом мыши; прижат к низу через margin-top: auto у первого сообщения. */
+      .chat-list {
+        flex: 1; overflow-y: auto; overflow-x: hidden; padding: 8px 12px; display: flex; flex-direction: column;
+        pointer-events: auto; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+      }
+      .chat-list > :first-child { margin-top: auto; }
       .chat-msg { padding: 3px 0; word-wrap: break-word; animation: chatIn .18s ease-out; }
       .chat-msg.hl { background: rgba(255, 60, 110, 0.18); border-radius: 6px; padding: 4px 6px; margin: 2px -6px; }
       .chat-msg .nick { font-weight: 700; }

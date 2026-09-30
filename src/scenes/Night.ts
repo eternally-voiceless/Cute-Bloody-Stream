@@ -3,9 +3,10 @@ import { ctx } from '../systems/context';
 import { imageKey } from '../systems/assets';
 import { createStream, threshold, viewers } from '../systems/run';
 import { deriveStats, type DerivedStats } from '../systems/stats';
-import { killFlags, killStyle, type KillFlags } from '../systems/style';
+import { hypeRank, killFlags, killStyle, type KillFlags } from '../systems/style';
 import { taskText } from '../systems/tasks';
 import { SpawnSystem } from '../systems/spawn';
+import { Blood } from '../systems/blood';
 import { ChatSystem } from '../systems/chat';
 import { Player } from '../entities/Player';
 import { Enemy } from '../entities/Enemy';
@@ -38,7 +39,7 @@ export class NightScene extends Phaser.Scene {
   private chatPanel!: ChatPanel;
   private hud!: Hud;
   private numbers!: DamageNumbers;
-  private blood!: Phaser.GameObjects.Particles.ParticleEmitter;
+  private blood!: Blood;
   private bossLine!: Phaser.GameObjects.Graphics;
   private keys!: Record<string, Phaser.Input.Keyboard.Key>;
   private paused = false;
@@ -80,7 +81,7 @@ export class NightScene extends Phaser.Scene {
 
     this.player = new Player(this, b, this.run.heroineId, this.stats, a.width / 2, a.height / 2);
     this.player.hp = this.stats.maxHp;   // intro: HP до максимума
-    this.player.sync();
+    this.player.sync(0);
 
     const cam = this.cameras.main;
     cam.setBounds(0, 0, a.width, a.height);
@@ -90,9 +91,9 @@ export class NightScene extends Phaser.Scene {
     this.spawn = new SpawnSystem(this, b, this.run.stream);
     this.bossLine = this.add.graphics().setDepth(-400);
     this.numbers = new DamageNumbers(this);
-    this.makeBlood();
+    this.blood = new Blood(this, -1e6 + 2);
 
-    this.chatPanel = new ChatPanel(this, 1560, 140, 340, 760, b.chat.maxMessages);
+    this.chatPanel = new ChatPanel(this, 1556, 22, 344, 600, b.chat.maxMessages);
     this.chat = new ChatSystem(this.chatPanel, ctx.chat, b, this.run.heroineId);
     this.hud = new Hud(this);
 
@@ -125,6 +126,7 @@ export class NightScene extends Phaser.Scene {
     (el.querySelector('.d-nick') as HTMLElement).textContent = `${nick} задонатил(а)`;
     (el.querySelector('.d-text') as HTMLElement).textContent = taskText(t);
     this.introDom = this.add.dom(960, 500, el).setOrigin(0.5).setScrollFactor(0).setDepth(2000);
+    this.introDom.pointerEvents = 'none';  // клик по карточке тоже запускает бой
     const dim = this.add.rectangle(960, 540, 1920, 1080, 0x000000, 0.55).setScrollFactor(0).setDepth(150000);
     this.overlay.push(dim);
   }
@@ -149,12 +151,13 @@ export class NightScene extends Phaser.Scene {
     if (this.paused) return;
     this.chat.update(dt, this.st.combo);
     this.numbers.update(dt);
+    this.blood.update(dt);
     // speed > 1 только в отладке: несколько шагов боя за кадр.
     for (let i = 0; i < ctx.debug.speed; i++) {
       if (this.st.phase === 'fight' && !this.ended) this.fightStep(dt);
       else this.idleStep(dt);
     }
-    this.player.sync();
+    this.player.sync(dt);
     this.updateHud();
   }
 
@@ -189,14 +192,14 @@ export class NightScene extends Phaser.Scene {
       alive++;
     }
     this.separate();
-    for (const e of this.enemies) if (e.active && !e.dying) e.sync();
+    for (const e of this.enemies) if (e.active && !e.dying) e.sync(dt);
 
     const boss = this.boss;
     if (boss && boss.active) {
       if (boss.dying) boss.updateDying(dt);
       else {
         if (boss.update(dt, p.x, p.y, p.radius)) alive += this.summon(alive);
-        boss.sync();
+        boss.sync(dt);
       }
     }
     this.drawBossLine();
@@ -299,7 +302,7 @@ export class NightScene extends Phaser.Scene {
       this.tweens.add({ targets: m, alpha: 0, duration: 1500, onComplete: () => m.destroy() });
     }
     this.boss = new Boss(this, b, pos.x, pos.y);
-    this.boss.sync();
+    this.boss.sync(0);
     this.chat.event('boss_spawn');
   }
 
@@ -375,8 +378,8 @@ export class NightScene extends Phaser.Scene {
     p.aimAt(target.x, target.y);
     if (p.fireTimer > 0) return;
     p.fireTimer = Math.max(p.fireTimer + period, 0);
-    const m = p.muzzle;
-    const base = Math.atan2(target.y - m.y, target.x - m.x);
+    const m = p.barrelTip;
+    const base = Math.atan2(target.y - p.muzzle.y, target.x - p.muzzle.x);
     this.volley++;
     for (let i = 0; i < w.pellets; i++) {
       const spread = Phaser.Math.DegToRad(Phaser.Math.FloatBetween(-w.spread / 2, w.spread / 2));
@@ -432,11 +435,12 @@ export class NightScene extends Phaser.Scene {
     pr.hitsLeft--;
     pr.damage *= w.pierceDamageFactor;
     this.numbers.show(t.x, t.y - t.radius, dmg, crit);
+    this.blood.hit(t.x, t.y, pr.dirX, pr.dirY);
     if (w.knockback > 0 && t.lastKnockVolley !== pr.volley && !t.isBoss) {
       t.lastKnockVolley = pr.volley;
       (t as Enemy).knock(pr.dirX, pr.dirY, w.knockback);
     }
-    if (t.hp <= 0) this.onKill(t, crit);
+    if (t.hp <= 0) this.onKill(t, crit, pr.dirX, pr.dirY);
   }
 
   // ---------- убийства, стиль, задание ----------
@@ -446,12 +450,13 @@ export class NightScene extends Phaser.Scene {
     return !st.task.completed && !(st.isBossStream && st.thresholdReached);
   }
 
-  private onKill(t: Target, crit: boolean): void {
+  private onKill(t: Target, crit: boolean, dirX = 0, dirY = 1): void {
     const st = this.st;
     const p = this.player;
     const dist = Math.hypot(t.x - p.x, t.y - p.y);
     const flags = killFlags(this.b, { crit, dist, range: this.stats.range });
-    this.blood.explode(t.isBoss ? 60 : 12, t.x, t.y);
+    // Размер брызг и пятна — по размеру врага (шатун = 1).
+    this.blood.kill(t.x, t.y, dirX, dirY, t.isBoss ? 3 : t.radius / 20);
     t.die();
 
     if (t.isBoss) {
@@ -562,6 +567,7 @@ export class NightScene extends Phaser.Scene {
     if (!hitBy || ctx.debug.god) return;
     p.hp -= hitBy.damage * this.stats.armorFactor;
     p.invul = this.b.player.invulnerability;
+    this.blood.hit(p.x, p.y, p.x - hitBy.x, p.y - hitBy.y);
     this.st.combo = 0;
     this.noHitTimer = 0;
     if (this.st.task.type === 'noHit' && this.taskOpen()) this.st.task.progress = 0;
@@ -644,7 +650,7 @@ export class NightScene extends Phaser.Scene {
     this.ended = true;
     this.chat.event('death');
     this.player.setVisible(false);
-    this.blood.explode(80, this.player.x, this.player.y);
+    this.blood.kill(this.player.x, this.player.y, 0, 1, 2.5);
     this.cameras.main.shake(400, 0.01);
     this.time.delayedCall(1200, () => {
       this.cameras.main.fadeOut(300);
@@ -694,32 +700,17 @@ export class NightScene extends Phaser.Scene {
 
   // ---------- HUD и эффекты ----------
 
-  private makeBlood(): void {
-    if (!this.textures.exists('fx:blood')) {
-      const g = this.make.graphics({ x: 0, y: 0 }, false);
-      g.fillStyle(0xffffff, 1).fillCircle(4, 4, 4);
-      g.generateTexture('fx:blood', 8, 8);
-      g.destroy();
-    }
-    this.blood = this.add.particles(0, 0, 'fx:blood', {
-      speed: { min: 60, max: 260 },
-      scale: { start: 1.2, end: 0.3 },
-      alpha: { start: 1, end: 0 },
-      lifespan: { min: 250, max: 600 },
-      tint: [0xb3122e, 0x8a0b1f, 0xd81e3c],
-      gravityY: 300,
-      emitting: false,
-    }).setDepth(90000);
-  }
-
   private updateHud(): void {
     const st = this.st;
     const boss = this.boss;
+    const hype = hypeRank(this.b, st.combo);
     this.hud.update({
       hp: this.player.hp,
       maxHp: this.stats.maxHp,
       coins: this.run.coins,
       combo: st.combo,
+      hypeRank: hype.rank,
+      hypeIndex: hype.index,
       stream: this.run.stream,
       streams: STREAMS,
       style: st.styleRaw,
