@@ -40,23 +40,23 @@
   },
 
   "enemies": {
-    "walker": { "name": "Шатун",   "hp": 20,  "speed": 70,  "damage": 8,  "style": 10, "size": 40, "color": "#6b8f5e", "weight": 6, "fromStream": 1, "knockbackResist": 0 },
-    "runner": { "name": "Бегун",   "hp": 10,  "speed": 170, "damage": 6,  "style": 12, "size": 32, "color": "#a3c46a", "weight": 3, "fromStream": 2, "knockbackResist": 0 },
-    "brute":  { "name": "Громила", "hp": 120, "speed": 45,  "damage": 20, "style": 40, "size": 72, "color": "#3f5a36", "weight": 1, "fromStream": 5, "knockbackResist": 1 }
+    "walker": { "name": "Шатун",   "hp": 20,  "speed": 84,  "damage": 8,  "style": 10, "size": 40, "color": "#6b8f5e", "weight": 6, "fromStream": 1, "knockbackResist": 0 },
+    "runner": { "name": "Бегун",   "hp": 10,  "speed": 187, "damage": 6,  "style": 12, "size": 32, "color": "#a3c46a", "weight": 3, "fromStream": 2, "knockbackResist": 0 },
+    "brute":  { "name": "Громила", "hp": 150, "speed": 54,  "damage": 20, "style": 40, "size": 72, "color": "#3f5a36", "weight": 1, "fromStream": 5, "knockbackResist": 1 }
   },
   "boss": {
-    "name": "Хейтер", "streams": [10, 20], "hp": 2500, "speed": 80, "damage": 25, "style": 500,
+    "name": "Хейтер", "streams": [10, 20], "hp": 3000, "speed": 96, "damage": 25, "style": 500,
     "size": 140, "color": "#4a1f5c", "spawnOffset": 80,
     "dash":   { "cooldown": 6, "telegraph": 1, "speed": 700, "distance": 600 },
     "summon": { "cooldown": 8, "count": 5 }
   },
-  "scaling": { "hpPerStream": 0.07, "damagePerStream": 0.08 },
+  "scaling": { "hpPerStream": 0.09, "damagePerStream": 0.08, "bossHpPerStream": 0.09 },
 
   "spawn": { "interval": 1.3, "intervalStep": 0.117, "minInterval": 0.8,
              "group": 3, "groupEvery": 10, "minDistance": 400, "telegraph": 1, "maxAlive": 200 },
 
   "style": {
-    "threshold": { "base": 500, "step": 550 },
+    "threshold": { "base": 500, "step": 330 },
     "comboWindow": 2, "comboStep": 0.05, "comboCap": 40,
     "critBonus": 5, "longShotRatio": 0.8, "longShotBonus": 8, "closeDistance": 90, "closeBonus": 8,
     "hype": [ { "rank": "D", "combo": 0 }, { "rank": "C", "combo": 5 }, { "rank": "B", "combo": 10 },
@@ -65,7 +65,7 @@
   "viewers": { "base": 12, "perStyle": 0.05 },
 
   "drops":   { "coinValue": 1, "magnetRadius": 120, "magnetSpeed": 700 },
-  "economy": { "styleToCoins": 0.03 },
+  "economy": { "styleToCoins": 0.048 },
 
   "tasks": {
     "reward": { "base": 8, "step": 8 },
@@ -85,8 +85,8 @@
 
   "shop": {
     "hp":             { "name": "Здоровье",              "increment": 10, "basePrice": 10, "priceStep": 4 },
-    "damage":         { "name": "Урон",                  "increment": 8,  "basePrice": 12, "priceStep": 5 },
-    "attackSpeed":    { "name": "Скорость атаки",        "increment": 8,  "basePrice": 12, "priceStep": 5 },
+    "damage":         { "name": "Урон",                  "increment": 5,  "basePrice": 12, "priceStep": 5 },
+    "attackSpeed":    { "name": "Скорость атаки",        "increment": 5,  "basePrice": 12, "priceStep": 5 },
     "moveSpeed":      { "name": "Скорость передвижения", "increment": 5,  "basePrice": 10, "priceStep": 4 },
     "range":          { "name": "Дальность атаки",       "increment": 8,  "basePrice": 10, "priceStep": 4 },
     "armor":          { "name": "Броня",                 "increment": 2,  "basePrice": 12, "priceStep": 5 },

@@ -75,7 +75,7 @@ export interface Balance {
   weapons: Record<string, WeaponConfig>;
   enemies: Record<string, EnemyConfig>;
   boss: BossConfig;
-  scaling: { hpPerStream: number; damagePerStream: number };
+  scaling: { hpPerStream: number; damagePerStream: number; bossHpPerStream?: number };
   spawn: {
     interval: number; intervalStep: number; minInterval: number;
     group: number; groupEvery: number; minDistance: number; telegraph: number; maxAlive: number;

@@ -30,11 +30,11 @@ export class Boss {
   private dieT = 0;
   readonly view: SpriteView;
 
-  constructor(scene: Phaser.Scene, private b: Balance, x: number, y: number) {
+  constructor(scene: Phaser.Scene, private b: Balance, x: number, y: number, n: number) {
     const c = b.boss;
     this.x = x;
     this.y = y;
-    this.hp = this.maxHp = c.hp;
+    this.hp = this.maxHp = c.hp * (1 + (n - 1) * (b.scaling.bossHpPerStream ?? 0));
     this.damage = c.damage;
     this.radius = c.size / 2;
     this.dashCd = c.dash.cooldown;

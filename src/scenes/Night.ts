@@ -319,7 +319,7 @@ export class NightScene extends Phaser.Scene {
       const m = this.add.image(pos.x, pos.y, imageKey(this, 'spawn_marker')).setScale(3).setDepth(-500);
       this.tweens.add({ targets: m, alpha: 0, duration: 1500, onComplete: () => m.destroy() });
     }
-    this.boss = new Boss(this, b, pos.x, pos.y);
+    this.boss = new Boss(this, b, pos.x, pos.y, this.run.stream);
     this.boss.sync(0);
     this.chat.event('boss_spawn');
   }
@@ -459,7 +459,7 @@ export class NightScene extends Phaser.Scene {
       t.lastKnockVolley = pr.volley;
       (t as Enemy).knock(pr.dirX, pr.dirY, w.knockback);
     }
-    if (t.isBoss && !this.bossHalfSent && t.hp > 0 && t.hp <= this.b.boss.hp / 2) {
+    if (t.isBoss && !this.bossHalfSent && t.hp > 0 && t.hp <= (t as Boss).maxHp / 2) {
       this.bossHalfSent = true;
       this.chat.event('boss_half');
     }
@@ -781,7 +781,7 @@ export class NightScene extends Phaser.Scene {
       viewers: viewers(this.b, this.run),
       task: st.task,
       bossHp: boss && boss.active && !boss.dying ? boss.hp : null,
-      bossMaxHp: this.b.boss.hp,
+      bossMaxHp: boss ? boss.maxHp : this.b.boss.hp,
       bossName: this.b.boss.name,
       thresholdReached: st.thresholdReached,
       isBossStream: st.isBossStream,

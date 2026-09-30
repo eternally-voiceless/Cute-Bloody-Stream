@@ -164,6 +164,7 @@ python ../tools/prepare_sprites.py   # из game/, или python tools/prepare_s
 | Параметр | Смысл |
 |---|---|
 | `hpPerStream` | HP врага × (1 + (n − 1) · hpPerStream) |
+| `bossHpPerStream` | HP босса × (1 + (n − 1) · bossHpPerStream); нет поля — не растёт |
 | `damagePerStream` | Урон врага × (1 + (n − 1) · damagePerStream) |
 
 ### `spawn`
