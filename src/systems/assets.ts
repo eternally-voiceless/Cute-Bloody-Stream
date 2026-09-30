@@ -38,7 +38,14 @@ export function validateAssets(a: AssetsConfig): void {
   for (const [k, spec] of Object.entries(a.sounds ?? {})) {
     for (const part of spec.sequence ?? []) if (!a.sounds?.[part]) console.warn(`[assets] sounds.${k}.sequence: нет sounds.${part}`);
   }
+  (a.arena?.props ?? []).forEach((p, i) => {
+    if (!p.img && !p.frames?.length) console.warn(`[assets] arena.props[${i}]: нет img или frames`);
+    if (typeof p.x !== 'number' || typeof p.y !== 'number') console.warn(`[assets] arena.props[${i}]: x и y должны быть числами`);
+  });
 }
+
+/** Ключ текстуры картинки окружения арены по её пути. */
+export const envKey = (path: string): string => `env:${path}`;
 
 export function queueAssets(scene: Phaser.Scene, a: AssetsConfig): void {
   scene.load.on(Phaser.Loader.Events.FILE_LOAD_ERROR, (file: Phaser.Loader.File) => {
@@ -70,6 +77,8 @@ export function queueAssets(scene: Phaser.Scene, a: AssetsConfig): void {
     if (spec.path) scene.load.audio(soundKey(key), spec.path);
   }
   if (a.music?.path) scene.load.audio(MUSIC_KEY, a.music.path);
+  const envPaths = new Set((a.arena?.props ?? []).flatMap((p) => p.frames ?? (p.img ? [p.img] : [])));
+  for (const path of envPaths) scene.load.image(envKey(path), path);
 }
 
 // Создаёт анимации Phaser для загруженных спрайт-листов.

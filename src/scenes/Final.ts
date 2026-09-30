@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { ctx } from '../systems/context';
 import { imageKey } from '../systems/assets';
+import { floorSprite } from '../systems/arena';
 import { markCompleted } from '../systems/save';
 import { ChatSystem } from '../systems/chat';
 import { Player } from '../entities/Player';
@@ -30,7 +31,7 @@ export class FinalScene extends Phaser.Scene {
 
     const cx = 960;
     const cy = 600;
-    this.add.tileSprite(0, 0, 1920, 1080, imageKey(this, 'arena_bg')).setOrigin(0).setDepth(-1e6);
+    floorSprite(this, 0, 0, 1920, 1080);
     const stats = deriveStats(b, run.heroineId, run.statPoints);
     this.player = new Player(this, b, run.heroineId, stats, 480, 820);
     this.player.aimAt(1000, 820);

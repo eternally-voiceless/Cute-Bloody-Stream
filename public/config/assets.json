@@ -200,7 +200,7 @@
     }
   },
   "images": {
-    "arena_bg": null,
+    "arena_bg": "assets/env/floor.jpg",
     "select_bg": null,
     "coin": null,
     "spawn_marker": null,
@@ -222,5 +222,36 @@
     "shotgun_pump_1": {"path": "assets/sounds/shotgun_pump_1.mp3", "volume": 0.6},
     "shotgun_pump_2": {"path": "assets/sounds/shotgun_pump_2.mp3", "volume": 0.6}
   },
-  "music": {"path": null, "volume": 0.5}
+  "music": {"path": null, "volume": 0.5},
+  "arena": {
+    "border": 220,
+    "floorBrightness": 0.5,
+    "floorScale": 1,
+    "dim": 0.55,
+    "props": [
+      {"img": "assets/env/car.png", "x": -170, "y": 820},
+      {"frames": ["assets/env/flame-a.png", "assets/env/flame-b.png"], "x": -60, "y": 730, "scale": 0.8, "depthOf": 0},
+      {"img": "assets/env/crate.png", "x": -110, "y": 1250},
+      {"img": "assets/env/crate.png", "x": -60, "y": 1330, "scale": 0.9, "flip": true},
+      {"img": "assets/env/generator.png", "x": 1900, "y": 1820},
+      {"frames": ["assets/env/flame-a.png", "assets/env/flame-b.png"], "x": 1860, "y": 1735, "scale": 0.7, "depthOf": 4},
+      {"img": "assets/env/crate.png", "x": 2990, "y": 1530},
+      {"img": "assets/env/crate.png", "x": 3050, "y": 1590, "scale": 0.9, "flip": true},
+      {"img": "assets/env/vent.png", "x": 2990, "y": 1810},
+      {"img": "assets/env/vent.png", "x": 620, "y": -30},
+      {"img": "assets/env/vent.png", "x": 820, "y": -30},
+      {"img": "assets/env/crate.png", "x": 900, "y": 1810, "scale": 0.9},
+      {"img": "assets/env/scorch-a.png", "x": -110, "y": 780, "flat": true, "scale": 1.3},
+      {"img": "assets/env/scorch-a.png", "x": 1900, "y": 1760, "flat": true, "scale": 1.2, "angle": 40},
+      {"img": "assets/env/scorch-b.png", "x": 220, "y": 780, "flat": true, "scale": 1.1, "alpha": 0.85},
+      {"img": "assets/env/debris-a.png", "x": 460, "y": 700, "flat": true},
+      {"img": "assets/env/debris-b.png", "x": 700, "y": 860, "flat": true, "scale": 0.9, "angle": 30},
+      {"img": "assets/env/scorch-a.png", "x": 1880, "y": 1480, "flat": true, "alpha": 0.85},
+      {"img": "assets/env/debris-b.png", "x": 1700, "y": 1330, "flat": true, "angle": 20},
+      {"img": "assets/env/scorch-a.png", "x": 2300, "y": 500, "flat": true, "scale": 0.9, "angle": 60, "alpha": 0.85},
+      {"img": "assets/env/debris-a.png", "x": 2500, "y": 700, "flat": true, "flip": true},
+      {"img": "assets/env/scorch-b.png", "x": 1000, "y": 1300, "flat": true, "angle": -25, "alpha": 0.85},
+      {"img": "assets/env/debris-b.png", "x": 1150, "y": 420, "flat": true, "angle": 90}
+    ]
+  }
 }

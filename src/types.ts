@@ -205,13 +205,36 @@ export interface SoundSpec {
   maxRate?: number;      // предел ускорения (по умолчанию 1.5)
 }
 
+/** Объект окружения арены: декаль на полу, объёмный объект за линией или огонь (`frames`). */
+export interface ArenaProp {
+  img?: string;
+  frames?: string[];     // кадры огня вместо img
+  x: number;
+  y: number;
+  flat?: boolean;        // декаль на полу (origin по центру), иначе origin (0.5, 1)
+  scale?: number;
+  angle?: number;
+  flip?: boolean;
+  alpha?: number;
+  depthOf?: number;      // огонь: индекс объекта в props, на котором лежит пламя
+}
+
+export interface ArenaConfig {
+  border?: number;          // видимая полоса за линией, px
+  floorBrightness?: number; // яркость пола 0…1
+  floorScale?: number;      // масштаб тайла пола
+  dim?: number;             // яркость всего за линией
+  props?: ArenaProp[];
+}
+
 export interface AssetsConfig {
   portraits: Record<HeroineId, { base: string | null; selected: string | null; background: string | null }>;
   sprites: Record<string, SpriteSpec>;
   images: Record<string, string | null>;
   soundVolume?: number;
   sounds?: Record<string, SoundSpec>;
-  music?: { path?: string | null; volume?: number };  // фоновый трек по кругу; громкость × ползунок «Музыка»
+  music?: { path?: string | null; volume?: number };
+  arena?: ArenaConfig;  // фоновый трек по кругу; громкость × ползунок «Музыка»
 }
 
 export interface TaskState {

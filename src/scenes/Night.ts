@@ -7,6 +7,7 @@ import { hypeRank, killFlags, killStyle, type KillFlags } from '../systems/style
 import { plural, taskText } from '../systems/tasks';
 import { SpawnSystem } from '../systems/spawn';
 import { Blood } from '../systems/blood';
+import { buildArena } from '../systems/arena';
 import { ChatSystem, takeViewersMilestone, type ChatState } from '../systems/chat';
 import { loadProgress } from '../systems/save';
 import { Player } from '../entities/Player';
@@ -88,9 +89,8 @@ export class NightScene extends Phaser.Scene {
     this.stats = deriveStats(b, this.run.heroineId, this.run.statPoints);
     const a = b.world.arena;
 
-    // Арена: тёмная заливка с сеткой (или arena_bg), стены.
-    this.add.tileSprite(0, 0, a.width, a.height, imageKey(this, 'arena_bg')).setOrigin(0).setDepth(-1e6);
-    this.add.graphics().lineStyle(8, 0xff3d7f, 0.6).strokeRect(0, 0, a.width, a.height).setDepth(-1e6 + 1);
+    // Арена: пол, полоса за линией с объектами, линия границы (assets.json → arena).
+    const border = buildArena(this);
 
     this.player = new Player(this, b, this.run.heroineId, this.stats, a.width / 2, a.height / 2);
     this.player.ammo = this.stats.weapon.magazine ?? 0;
@@ -98,7 +98,7 @@ export class NightScene extends Phaser.Scene {
     this.player.sync(0);
 
     const cam = this.cameras.main;
-    cam.setBounds(0, 0, a.width, a.height);
+    cam.setBounds(-border, -border, a.width + 2 * border, a.height + 2 * border);
     cam.startFollow(this.player.view, true, b.world.camera.lerp, b.world.camera.lerp);
     cam.fadeIn(250);
 
