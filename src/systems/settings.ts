@@ -6,7 +6,7 @@ export interface Settings {
   music: number;  // 0…1, громкость музыки
 }
 
-const DEFAULTS: Settings = { sfx: 1, music: 1 };
+const DEFAULTS: Settings = { sfx: 0.03, music: 0.05 };
 
 const clamp01 = (v: unknown, d: number): number => (typeof v === 'number' && isFinite(v) ? Math.min(1, Math.max(0, v)) : d);
 

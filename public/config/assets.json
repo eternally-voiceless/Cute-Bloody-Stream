@@ -12,7 +12,7 @@
     },
     "yandere": {
       "base": "assets/img/yandere/yandere-base-cutout.png",
-      "selected": "assets/img/yandere/yandere-selected-cutout.png",
+      "selected": "assets/img/yandere/yandere-selected-cutout-v2.png",
       "background": "assets/img/yandere/yandere-selected-background.png"
     }
   },

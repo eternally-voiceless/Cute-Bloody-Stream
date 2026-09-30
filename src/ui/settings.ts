@@ -93,4 +93,18 @@ export function initSettingsUi(game: Phaser.Game): void {
   panel.addEventListener('keydown', (e) => e.stopPropagation());
   // Кнопка не держит фокус: иначе пробел в игре снова нажимал бы её.
   gear.addEventListener('mouseup', () => gear.blur());
+
+  // Phaser слушает mouseup/touchend на window: отпускание над ползунком засчитывалось бы кликом
+  // по карточке под окном. Нажатие, начатое в настройках, до игры не доходит целиком.
+  let pressedInside = false;
+  for (const type of ['mousedown', 'touchstart'] as const) {
+    root.addEventListener(type, (e) => { pressedInside = true; e.stopPropagation(); });
+  }
+  for (const type of ['mouseup', 'touchend'] as const) {
+    window.addEventListener(type, (e) => {
+      if (!pressedInside) return;
+      if (type === 'mouseup' || (e as TouchEvent).touches.length === 0) pressedInside = false;
+      e.stopImmediatePropagation();
+    }, true);
+  }
 }
