@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import type { AssetsConfig, BobSpec, PlaceholderSpec, SpriteSpec } from '../types';
 import { HEROINE_IDS } from '../types';
 import { ctx } from './context';
-import { MUSIC_KEY } from './music';
+import { musicKey, musicPaths } from './music';
 
 // Ассеты по ключам из assets.json (ТЗ, раздел 3). Нет файла → предупреждение и плейсхолдер.
 
@@ -15,7 +15,7 @@ const animKey = (sprite: string, anim: string) => `${sprite}:${anim}`;
 
 const REQUIRED_SPRITES = [
   'hero_genki', 'hero_kuudere', 'hero_yandere', 'enemy_walker', 'enemy_runner', 'enemy_brute',
-  'boss_hater', 'weapon_rifle', 'weapon_laser', 'weapon_shotgun',
+  'enemy_hunter', 'enemy_stalker', 'boss_hater', 'weapon_rifle', 'weapon_laser', 'weapon_shotgun',
 ];
 const REQUIRED_IMAGES = [
   'arena_bg', 'select_bg', 'coin', 'spawn_marker', 'boss_arrow', 'helicopter',
@@ -76,8 +76,10 @@ export function queueAssets(scene: Phaser.Scene, a: AssetsConfig): void {
   for (const [key, spec] of Object.entries(a.sounds ?? {})) {
     if (spec.path) scene.load.audio(soundKey(key), spec.path);
   }
-  if (a.music?.path) scene.load.audio(MUSIC_KEY, a.music.path);
+  for (const path of musicPaths()) scene.load.audio(musicKey(path), path);
   const envPaths = new Set((a.arena?.props ?? []).flatMap((p) => p.frames ?? (p.img ? [p.img] : [])));
+  if (a.arena?.fence) { envPaths.add(a.arena.fence.h); envPaths.add(a.arena.fence.v); }
+  if (a.cane) for (const path of [a.cane.shaft, a.cane.open, a.cane.closed]) envPaths.add(path);
   for (const path of envPaths) scene.load.image(envKey(path), path);
 }
 

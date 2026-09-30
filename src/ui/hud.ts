@@ -23,6 +23,11 @@ export interface HudData {
   bossName: string;
   thresholdReached: boolean;
   isBossStream: boolean;
+  pushCd: number;
+  pushMax: number;
+  dashCd: number;
+  dashMax: number;
+  manual: boolean;
 }
 
 // Раскладка по референсу references/refcaht.png (ТЗ, раздел 13).
@@ -34,6 +39,8 @@ const BOSS_W = 700;
 const HP_X = 24;
 const HP_Y = 1000;
 const HP_W = 420;
+const AB_X = HP_X + HP_W + 14 + 150 + 14;   // способности — справа от монет
+const AB_W = 296;
 // Цвета рангов HYPE от D до SS.
 const HYPE_COLORS = [0x8a8fa3, 0x6fb1ff, 0x5ee8a0, 0xff4f9a, 0xffb13d, 0xff3d3d];
 
@@ -55,6 +62,8 @@ export class Hud {
   private bossText: Phaser.GameObjects.Text;
   private hpText: Phaser.GameObjects.Text;
   private coinText: Phaser.GameObjects.Text;
+  private abText: Phaser.GameObjects.Text[] = [];
+  private modeText: Phaser.GameObjects.Text;
   readonly debugText: Phaser.GameObjects.Text;
   readonly bossArrow: Phaser.GameObjects.Image;
   private objs: Phaser.GameObjects.GameObject[] = [];
@@ -90,6 +99,13 @@ export class Hud {
     this.hpText = fix(text(scene, HP_X + 58, HP_Y + 8, '', 24, '#ffffff', bold));
     fix(scene.add.image(HP_X + HP_W + 44, HP_Y + 30, imageKey(scene, 'coin')).setDisplaySize(30, 30));
     this.coinText = fix(text(scene, HP_X + HP_W + 66, HP_Y + 30, '', 30, '#ffffff', bold).setOrigin(0, 0.5));
+
+    // Способности: F и пробел с перезарядкой, режим стрельбы.
+    this.abText = [
+      fix(text(scene, AB_X + 40, HP_Y + 30, 'F', 24, '#ffffff', bold).setOrigin(0.5)),
+      fix(text(scene, AB_X + 104, HP_Y + 30, '␣', 26, '#ffffff', bold).setOrigin(0.5)),
+    ];
+    this.modeText = fix(text(scene, AB_X + 144, HP_Y + 30, '', 20, '#d6d3e3', bold).setOrigin(0, 0.5));
 
     this.debugText = fix(text(scene, 960, 1066, '', 18, '#9dff8a').setOrigin(0.5, 1));
     this.bossArrow = fix(scene.add.image(0, 0, imageKey(scene, 'boss_arrow')).setVisible(false));
@@ -180,6 +196,25 @@ export class Hud {
     // Монеты
     this.pill(HP_X + HP_W + 14, HP_Y - 6, 150, 72, 0x140c1e);
     this.coinText.setText(String(d.coins));
+
+    // Способности
+    this.pill(AB_X, HP_Y - 6, AB_W, 72, 0x140c1e);
+    const ability = (i: number, x: number, cd: number, max: number, label: string, color: number) => {
+      const r = 25;
+      const y = HP_Y + 30;
+      const ready = cd <= 0;
+      g.fillStyle(ready ? color : 0x3a2440, ready ? 0.9 : 1).fillCircle(x, y, r);
+      if (!ready) {
+        // Заполняется по часовой по мере перезарядки.
+        const k = 1 - cd / max;
+        g.fillStyle(color, 0.45).slice(x, y, r, -Math.PI / 2, -Math.PI / 2 + k * Math.PI * 2, false).fillPath();
+      }
+      g.lineStyle(2, ready ? 0xffffff : 0x6b5a78, ready ? 0.9 : 1).strokeCircle(x, y, r);
+      this.abText[i].setText(ready || max < 3 ? label : String(Math.ceil(cd))).setAlpha(ready ? 1 : 0.8);
+    };
+    ability(0, AB_X + 40, d.pushCd, d.pushMax, 'F', 0xffb13d);
+    ability(1, AB_X + 104, d.dashCd, d.dashMax, '␣', 0xff5fa2);
+    this.modeText.setText(d.manual ? 'Q · мышь (ЛКМ)' : 'Q · автоприцел');
     this.liveText.setAlpha(0.75 + 0.25 * Math.sin(this.scene.time.now / 300));
   }
 

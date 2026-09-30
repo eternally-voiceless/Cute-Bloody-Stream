@@ -3,7 +3,7 @@ import { ctx } from '../systems/context';
 import { parseDebug } from '../systems/debug';
 import { createAnims, queueAssets, validateAssets } from '../systems/assets';
 import { createRun } from '../systems/run';
-import { startMusic } from '../systems/music';
+import { enterRun, initMusic, playMenuMusic } from '../systems/music';
 import { initSettingsUi } from '../ui/settings';
 import type { AssetsConfig, Balance, ChatConfig } from '../types';
 import { text } from '../ui/widgets';
@@ -37,13 +37,15 @@ export class BootScene extends Phaser.Scene {
 
   private onAssetsLoaded(): void {
     createAnims(this, ctx.assets);
-    startMusic(this);
+    initMusic(this.game);
     initSettingsUi(this.game);
     const d = ctx.debug;
     if (d.heroine) {
       ctx.run = createRun(ctx.balance, d.heroine, d.stream ?? 1, d.coins ?? 0);
+      enterRun();
       this.scene.start('Night');
     } else {
+      playMenuMusic();
       this.scene.start('Select');
     }
   }

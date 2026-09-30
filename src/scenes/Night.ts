@@ -7,14 +7,15 @@ import { hypeRank, killFlags, killStyle, type KillFlags } from '../systems/style
 import { plural, taskText } from '../systems/tasks';
 import { SpawnSystem } from '../systems/spawn';
 import { Blood } from '../systems/blood';
-import { buildArena } from '../systems/arena';
+import { buildArena, type Arena } from '../systems/arena';
 import { ChatSystem, takeViewersMilestone, type ChatState } from '../systems/chat';
 import { loadProgress } from '../systems/save';
 import { Player } from '../entities/Player';
-import { Enemy } from '../entities/Enemy';
+import { Enemy, type ChaseInfo } from '../entities/Enemy';
 import { Boss } from '../entities/Boss';
 import { playSound } from '../systems/sound';
-import { onSettingsOpen } from '../systems/settings';
+import { loadManualAim, onSettingsOpen, saveManualAim } from '../systems/settings';
+import { setShopDuck, startRunMusic } from '../systems/music';
 import { Projectile, segmentHitsCircle } from '../entities/Projectile';
 import { Coin } from '../entities/Coin';
 import { ChatPanel } from '../ui/chatPanel';
@@ -45,6 +46,7 @@ export class NightScene extends Phaser.Scene {
   private numbers!: DamageNumbers;
   private blood!: Blood;
   private bossLine!: Phaser.GameObjects.Graphics;
+  private arena!: Arena;
   private keys!: Record<string, Phaser.Input.Keyboard.Key>;
   private paused = false;
   private ended = false;
@@ -60,6 +62,15 @@ export class NightScene extends Phaser.Scene {
   private exitMenu: Phaser.GameObjects.GameObject[] = [];
   private leaving = false;
   private introDom: Phaser.GameObjects.DOMElement | null = null;
+  private controlsDom: Phaser.GameObjects.DOMElement | null = null;
+  /** Ручной режим стрельбы (Q): прицел по мыши, огонь при зажатой ЛКМ. */
+  private manual = false;
+  private dashHit = new Set<number>();
+  // Нажатия F и пробела копятся до шага боя: короткое нажатие не теряется, даже если отпущено в том же кадре.
+  private wantPush = false;
+  private wantDash = false;
+  private ghostT = 0;
+  private toast: Phaser.GameObjects.Text | null = null;
 
   constructor() { super('Night'); }
 
@@ -83,6 +94,14 @@ export class NightScene extends Phaser.Scene {
     this.exitMenu = [];
     this.leaving = false;
     this.introDom = null;
+    this.controlsDom = null;
+    this.manual = loadManualAim();
+    this.dashHit = new Set();
+    this.wantPush = false;
+    this.wantDash = false;
+    this.ghostT = 0;
+    this.toast = null;
+    setShopDuck(false);
 
     const b = this.b;
     this.st = this.run.current = createStream(b, this.run);
@@ -90,7 +109,8 @@ export class NightScene extends Phaser.Scene {
     const a = b.world.arena;
 
     // Арена: пол, полоса за линией с объектами, линия границы (assets.json → arena).
-    const border = buildArena(this);
+    this.arena = buildArena(this);
+    const border = this.arena.border;
 
     this.player = new Player(this, b, this.run.heroineId, this.stats, a.width / 2, a.height / 2);
     this.player.ammo = this.stats.weapon.magazine ?? 0;
@@ -116,9 +136,15 @@ export class NightScene extends Phaser.Scene {
     this.hud = new Hud(this);
 
     const kb = this.input.keyboard!;
-    this.keys = kb.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,ESC,F9') as Record<string, Phaser.Input.Keyboard.Key>;
+    this.keys = kb.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,ESC,F9,Q,F,SPACE') as Record<string, Phaser.Input.Keyboard.Key>;
     kb.on('keydown', (e: KeyboardEvent) => {
-      if (this.st.phase === 'intro' && e.code !== 'Escape') this.startFight();
+      // Q на карточке переключает режим стрельбы и не начинает бой.
+      if (e.code === 'KeyQ') { if (this.st.phase === 'intro' || this.st.phase === 'fight') this.toggleAim(); }
+      else if (this.st.phase === 'fight' && !e.repeat && (e.code === 'KeyF' || e.code === 'Space')) {
+        if (e.code === 'KeyF') this.wantPush = true;
+        else this.wantDash = true;
+      }
+      else if (this.st.phase === 'intro' && e.code !== 'Escape') this.startFight();
       // Итоги стрима: пробел или Enter — «Дальше».
       else if (this.st.phase === 'summary' && this.exitMenu.length === 0 && (e.code === 'Space' || e.code === 'Enter')) this.next();
     });
@@ -150,18 +176,70 @@ export class NightScene extends Phaser.Scene {
       `<div class="d-text"></div><div class="d-hint">Нажмите любую клавишу</div>`;
     (el.querySelector('.d-nick') as HTMLElement).textContent = `донат от ${this.donor}`;
     (el.querySelector('.d-text') as HTMLElement).textContent = taskText(t);
-    this.introDom = this.add.dom(960, 500, el).setOrigin(0.5).setScrollFactor(0).setDepth(2000);
+    const first = this.run.stream === 1;
+    this.introDom = this.add.dom(960, first ? 320 : 500, el).setOrigin(0.5).setScrollFactor(0).setDepth(2000);
     this.introDom.pointerEvents = 'none';  // клик по карточке тоже запускает бой
+    if (first) this.showControls();
     const dim = this.add.rectangle(960, 540, 1920, 1080, 0x000000, 0.55).setScrollFactor(0).setDepth(150000);
     this.overlay.push(dim);
+  }
+
+  /** Сводка управления: только на первом стриме забега, там же выбор режима стрельбы. */
+  private showControls(): void {
+    const el = document.createElement('div');
+    el.className = 'controls';
+    const row = (k: string, t: string) => `<div class="c-key">${k}</div><div class="c-text">${t}</div>`;
+    const ab = this.b.abilities;
+    el.innerHTML =
+      `<div class="c-title">Управление</div>` +
+      `<div class="c-grid">` +
+      row('WASD / стрелки', 'движение') +
+      row('Q', 'авто / ручная стрельба') +
+      row('ЛКМ', 'огонь в ручном режиме, прицел — мышью') +
+      row('F', `оттолкнуть врагов · ${String(ab.push.cooldown).replace('.', ',')} с`) +
+      row('Пробел', `рывок сквозь толпу · ${ab.dash.cooldown} с`) +
+      row('Esc', 'пауза') +
+      `</div>` +
+      `<div class="c-mode"><span>Стрельба:</span>` +
+      `<button type="button" data-mode="auto">Авто</button><button type="button" data-mode="manual">Ручная (мышь)</button></div>`;
+    el.querySelectorAll<HTMLButtonElement>('button[data-mode]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        if ((btn.dataset.mode === 'manual') !== this.manual) this.toggleAim();
+      });
+    });
+    this.controlsDom = this.add.dom(960, 785, el).setOrigin(0.5).setScrollFactor(0).setDepth(2000);
+    this.syncControls();
+  }
+
+  private syncControls(): void {
+    const el = this.controlsDom?.node as HTMLElement | undefined;
+    el?.querySelectorAll<HTMLButtonElement>('button[data-mode]').forEach((btn) => {
+      btn.classList.toggle('on', (btn.dataset.mode === 'manual') === this.manual);
+    });
+  }
+
+  private toggleAim(): void {
+    this.manual = !this.manual;
+    saveManualAim(this.manual);
+    this.syncControls();
+    if (this.st.phase !== 'fight') return;
+    // Короткая подсказка внизу экрана.
+    this.toast?.destroy();
+    const t = text(this, 960, 900, this.manual ? 'Ручная стрельба: ЛКМ' : 'Автострельба', 30, '#ffffff', { fontStyle: 'bold', stroke: '#000000', strokeThickness: 6 })
+      .setOrigin(0.5).setScrollFactor(0).setDepth(250000);
+    this.toast = t;
+    this.tweens.add({ targets: t, alpha: 0, delay: 900, duration: 400, onComplete: () => { t.destroy(); if (this.toast === t) this.toast = null; } });
   }
 
   private startFight(): void {
     this.clearOverlay();
     this.introDom?.destroy();
     this.introDom = null;
+    this.controlsDom?.destroy();
+    this.controlsDom = null;
     this.st.phase = 'fight';
     if (this.st.isBossStream) this.spawnBoss();
+    startRunMusic();
   }
 
   private clearOverlay(): void {
@@ -183,6 +261,7 @@ export class NightScene extends Phaser.Scene {
       else this.idleStep(dt);
     }
     this.player.sync(dt);
+    this.arena.update(this.player.x, this.player.y);
     this.updateHud();
   }
 
@@ -204,8 +283,10 @@ export class NightScene extends Phaser.Scene {
     const k = this.keys;
     const ix = (k.D.isDown || k.RIGHT.isDown ? 1 : 0) - (k.A.isDown || k.LEFT.isDown ? 1 : 0);
     const iy = (k.S.isDown || k.DOWN.isDown ? 1 : 0) - (k.W.isDown || k.UP.isDown ? 1 : 0);
-    p.move(dt, ix, iy);
     p.tick(dt);
+    this.abilities(ix, iy);
+    p.move(dt, ix, iy);
+    if (p.dashT > 0) this.dashStep(dt);
     if (p.hp < this.stats.maxHp) p.hp = Math.min(this.stats.maxHp, p.hp + this.stats.regenPerSec * dt);
     if (this.lowHpWarned && p.hp >= this.stats.maxHp * (b.chat.lowHpOkRatio ?? b.player.lowHpRatio)) {
       this.lowHpWarned = false;
@@ -213,12 +294,22 @@ export class NightScene extends Phaser.Scene {
     }
 
     let alive = 0;
+    const counts: Record<string, number> = {};
+    let caneFree = true;
+    for (const e of this.enemies) if (e.active && !e.dying && e.caneBusy) caneFree = false;
+    const info: ChaseInfo = { x: p.x, y: p.y, r: p.radius, vx: p.vx, vy: p.vy, speed: this.stats.moveSpeed, caneFree };
+    let holder = false;
     for (const e of this.enemies) {
       if (!e.active) continue;
       if (e.dying) { e.updateDying(dt); continue; }
-      e.update(dt, p.x, p.y, p.radius, a.width, a.height);
+      e.update(dt, info, a.width, a.height);
+      if (e.caneBusy) info.caneFree = false;
+      if (e.grabbing) holder = true;
+      counts[e.typeId] = (counts[e.typeId] ?? 0) + 1;
       alive++;
     }
+    if (holder && !p.rooted && p.dashT <= 0) this.chat.event('player_grabbed');
+    p.rooted = holder && p.dashT <= 0;
     this.separate();
     for (const e of this.enemies) if (e.active && !e.dying) e.sync(dt);
 
@@ -236,7 +327,7 @@ export class NightScene extends Phaser.Scene {
     }
     this.drawBossLine();
 
-    for (const o of this.spawn.update(dt, alive, p.x, p.y)) this.spawnEnemy(o.type, o.x, o.y, false);
+    for (const o of this.spawn.update(dt, alive, p.x, p.y, counts)) this.spawnEnemy(o.type, o.x, o.y, false);
 
     // 2. Выстрелы и попадания → смерти → стиль, серия, задание, дроп.
     this.shoot(dt);
@@ -263,6 +354,75 @@ export class NightScene extends Phaser.Scene {
     }
     // 5. Смерть.
     if (p.hp <= 0) this.onDeath();
+  }
+
+  // ---------- способности: F — оттолкнуть, пробел — рывок ----------
+
+  private abilities(ix: number, iy: number): void {
+    const p = this.player;
+    const push = this.wantPush, dash = this.wantDash;
+    this.wantPush = this.wantDash = false;
+    if (push && p.pushCd <= 0) this.push();
+    if (dash && p.dashCd <= 0 && p.dashT <= 0) {
+      this.releaseGrabs();
+      this.dashHit.clear();
+      this.ghostT = 0;
+      p.dash(ix, iy);
+    }
+  }
+
+  private releaseGrabs(): void {
+    for (const e of this.enemies) if (e.active && !e.dying) e.releaseGrab();
+    this.player.rooted = false;
+  }
+
+  private push(): void {
+    const p = this.player;
+    const c = this.b.abilities.push;
+    p.pushCd = c.cooldown;
+    this.releaseGrabs();
+    for (const e of this.enemies) {
+      if (!e.active || e.dying) continue;
+      const dx = e.x - p.x, dy = e.y - p.y;
+      const d = Math.hypot(dx, dy);
+      if (d > c.radius + e.radius) continue;
+      // Ближних толкает сильнее.
+      e.knock(dx || 1, dy, c.force * (1 - 0.4 * d / (c.radius + e.radius)), c.resistFactor);
+    }
+    // Волна от героини.
+    const ring = this.add.circle(p.x, p.y, 20).setStrokeStyle(6, 0xffe066, 0.9).setDepth(p.y + 1);
+    this.tweens.add({
+      targets: ring, radius: c.radius, alpha: 0, duration: 260, ease: 'Quad.easeOut',
+      onUpdate: () => ring.setPosition(this.player.x, this.player.y),
+      onComplete: () => ring.destroy(),
+    });
+    this.cameras.main.shake(80, 0.002);
+  }
+
+  /** Шаг рывка: враги на пути разлетаются в стороны, за героиней — шлейф. */
+  private dashStep(dt: number): void {
+    const p = this.player;
+    const c = this.b.abilities.dash;
+    const len = Math.hypot(p.vx, p.vy) || 1;
+    const fx = p.vx / len, fy = p.vy / len;
+    for (const e of this.enemies) {
+      if (!e.active || e.dying || this.dashHit.has(e.id)) continue;
+      const dx = e.x - p.x, dy = e.y - p.y;
+      if (Math.hypot(dx, dy) > c.pushRadius + e.radius) continue;
+      this.dashHit.add(e.id);
+      // В сторону от линии рывка и немного вперёд.
+      const side = dx * fy - dy * fx >= 0 ? -1 : 1;
+      e.knock(-fy * side + fx * 0.3, fx * side + fy * 0.3, c.force, 0.5);
+    }
+    this.ghostT -= dt;
+    if (this.ghostT <= 0) {
+      this.ghostT = 0.035;
+      const v = p.view;
+      const g = this.add.image(v.x, v.y, v.texture.key, v.frame.name)
+        .setOrigin(v.originX, v.originY).setScale(v.scaleX, v.scaleY).setFlipX(v.flipX)
+        .setTint(0xff7fbf).setAlpha(0.55).setDepth(p.y - 0.5);
+      this.tweens.add({ targets: g, alpha: 0, duration: 220, onComplete: () => g.destroy() });
+    }
   }
 
   // ---------- враги ----------
@@ -355,6 +515,19 @@ export class NightScene extends Phaser.Scene {
   private drawBossLine(): void {
     const g = this.bossLine;
     g.clear();
+    // Охотник: красная прямая на время замирания. Сталкер: тонкая линия на замахе.
+    const pulse = Math.abs(Math.sin(this.time.now / 60));
+    for (const e of this.enemies) {
+      if (!e.active || e.dying) continue;
+      if (e.mode === 'freeze') {
+        const L = e.leapLength;
+        g.lineStyle(e.radius * 0.9, 0xff2a4a, 0.3 + 0.25 * pulse);
+        g.lineBetween(e.x, e.y, e.x + e.dirX * L, e.y + e.dirY * L);
+      } else if (e.mode === 'cast') {
+        g.lineStyle(4, 0xb45cff, 0.25 + 0.3 * pulse);
+        g.lineBetween(e.x, e.y - e.radius, this.player.x, this.player.y);
+      }
+    }
     const boss = this.boss;
     if (!boss || !boss.active || boss.dying || boss.state !== 'telegraph') return;
     const d = this.b.boss.dash.distance;
@@ -410,12 +583,21 @@ export class NightScene extends Phaser.Scene {
       p.fireTimer = Math.max(p.fireTimer, 0);
       if (p.reloadT <= 0) p.ammo = w.magazine ?? 0;
     }
-    const target = this.findTarget();
+    let target: { x: number; y: number } | null;
+    if (this.manual) {
+      // Ручной режим: прицел по мыши всегда, огонь — пока зажата ЛКМ.
+      const ptr = this.input.activePointer;
+      const wp = this.cameras.main.getWorldPoint(ptr.x, ptr.y);
+      p.aimAt(wp.x, wp.y);
+      target = ptr.isDown && ptr.leftButtonDown() ? wp : null;
+    } else {
+      target = this.findTarget();
+      if (target) p.aimAt(target.x, target.y);
+    }
     if (!target) {
       p.fireTimer = Math.max(p.fireTimer, 0);
       return;
     }
-    p.aimAt(target.x, target.y);
     if (p.reloadT > 0 || p.fireTimer > 0) return;
     p.fireTimer = Math.max(p.fireTimer + period, 0);
     const m = p.barrelTip;
@@ -843,6 +1025,11 @@ export class NightScene extends Phaser.Scene {
       bossName: this.b.boss.name,
       thresholdReached: st.thresholdReached,
       isBossStream: st.isBossStream,
+      pushCd: this.player.pushCd,
+      pushMax: this.b.abilities.push.cooldown,
+      dashCd: this.player.dashCd,
+      dashMax: this.b.abilities.dash.cooldown,
+      manual: this.manual,
     });
     this.updateBossArrow();
     if (st.phase === 'fight') {

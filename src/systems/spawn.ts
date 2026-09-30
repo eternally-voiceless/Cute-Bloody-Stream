@@ -28,12 +28,17 @@ export class SpawnSystem {
     return this.pending.length;
   }
 
-  pickType(): string {
-    const list = Object.entries(this.b.enemies).filter(([, e]) => e.fromStream <= this.n && e.weight > 0);
-    const total = list.reduce((s, [, e]) => s + e.weight, 0);
+  /** counts — сколько врагов каждого типа уже на арене (без ожидающих появления, их считаем здесь). */
+  pickType(counts: Record<string, number> = {}): string {
+    const have = (id: string) => (counts[id] ?? 0) + this.pending.filter((p) => p.type === id).length;
+    const list = Object.entries(this.b.enemies)
+      .filter(([id, e]) => e.fromStream <= this.n && e.weight > 0 && (e.max === undefined || have(id) < e.max))
+      // Каждый следующий враг ограниченного типа появляется реже.
+      .map(([id, e]) => [id, e.weight * Math.pow(e.falloff ?? 1, have(id))] as const);
+    const total = list.reduce((s, [, w]) => s + w, 0);
     let r = Math.random() * total;
-    for (const [id, e] of list) {
-      r -= e.weight;
+    for (const [id, w] of list) {
+      r -= w;
       if (r <= 0) return id;
     }
     return list[0]?.[0] ?? 'walker';
@@ -60,7 +65,7 @@ export class SpawnSystem {
   }
 
   /** alive — число живых обычных врагов (без босса). Возвращает врагов, которых пора создать. */
-  update(dt: number, alive: number, px: number, py: number): SpawnOrder[] {
+  update(dt: number, alive: number, px: number, py: number, counts: Record<string, number> = {}): SpawnOrder[] {
     const out: SpawnOrder[] = [];
     for (let i = this.pending.length - 1; i >= 0; i--) {
       const p = this.pending[i];
@@ -79,7 +84,7 @@ export class SpawnSystem {
       const free = this.b.spawn.maxAlive - alive - this.pending.length;
       const count = Math.min(this.groupSize(), free);
       for (let i = 0; i < count; i++) {
-        const type = this.pickType();
+        const type = this.pickType(counts);
         const size = this.b.enemies[type].size;
         const pt = this.pickPoint(px, py, size / 2);
         this.pending.push({ ...pt, type, t: this.b.spawn.telegraph, marker: this.marker(pt.x, pt.y) });

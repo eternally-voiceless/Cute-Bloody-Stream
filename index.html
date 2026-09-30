@@ -43,6 +43,25 @@
       .donation .d-amount { font-size: 44px; font-weight: 900; color: #ffe066; text-shadow: 0 3px 0 rgba(0,0,0,.25); }
       .donation .d-text { font-size: 28px; font-weight: 700; margin-top: 10px; }
       .donation .d-hint { font-size: 18px; opacity: .8; margin-top: 18px; }
+      /* Сводка управления на первом стриме забега. */
+      .controls {
+        box-sizing: border-box; width: 760px; padding: 24px 34px 26px; border-radius: 20px;
+        background: rgba(22, 18, 34, 0.94); border: 1px solid rgba(255, 255, 255, 0.14);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+        font: 22px/1.35 "Segoe UI", Roboto, Arial, sans-serif; color: #e8e6f0;
+      }
+      .controls .c-title { font-size: 26px; font-weight: 800; color: #fff; text-align: center; margin-bottom: 14px; }
+      .controls .c-grid { display: grid; grid-template-columns: 210px 1fr; gap: 8px 18px; align-items: center; }
+      .controls .c-key { justify-self: end; font-weight: 800; color: #ffd23f; padding: 2px 12px; border-radius: 8px;
+        background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.16); font-size: 19px; }
+      .controls .c-mode { display: flex; gap: 12px; align-items: center; justify-content: center; margin-top: 20px; }
+      .controls .c-mode span { font-weight: 700; }
+      .controls .c-mode button {
+        font: 700 20px "Segoe UI", Roboto, Arial, sans-serif; color: #e8e6f0; cursor: pointer; padding: 8px 18px;
+        background: rgba(255, 255, 255, 0.08); border: 2px solid rgba(255, 255, 255, 0.18); border-radius: 12px;
+      }
+      .controls .c-mode button:hover { border-color: #ff8fb5; }
+      .controls .c-mode button.on { background: #ff3d7f; border-color: #ff8fb5; color: #fff; }
       /* Настройки: значок в правом верхнем углу (над шапкой чата) и модальное окно громкости. */
       .settings-root { position: absolute; inset: 0; z-index: 1000000; pointer-events: none;
         font: 22px/1.35 "Segoe UI", Roboto, Arial, sans-serif; color: #e8e6f0; }

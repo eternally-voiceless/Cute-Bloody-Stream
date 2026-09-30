@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { ctx } from '../systems/context';
 import { imageKey } from '../systems/assets';
 import { isBossStream } from '../systems/run';
+import { setShopDuck } from '../systems/music';
 import { canBuy, buy, price } from '../systems/shop';
 import { deriveStats, statRows } from '../systems/stats';
 import { STAT_IDS, type StatId } from '../types';
@@ -18,6 +19,7 @@ export class DayScene extends Phaser.Scene {
     if (!ctx.run) { this.scene.start('Select'); return; }
     this.dynamic = [];
     this.menu = [];
+    setShopDuck(true);
     this.input.keyboard!.on('keydown-ESC', () => this.toggleMenu());
     const g = this.add.graphics();
     g.fillGradientStyle(0x2a1a2e, 0x2a1a2e, 0x0b0b10, 0x0b0b10, 1).fillRect(0, 0, 1920, 1080);

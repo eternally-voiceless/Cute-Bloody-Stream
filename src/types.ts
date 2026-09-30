@@ -51,6 +51,38 @@ export interface EnemyConfig {
   weight: number;
   fromStream: number;
   knockbackResist: number;
+  max?: number;              // не больше стольких одновременно (с учётом ожидающих появления)
+  falloff?: number;          // вес появления × falloff^(сколько уже есть): каждый следующий реже
+  matchPlayerSpeed?: boolean; // не медленнее героини
+  speedOfPlayer?: number;    // скорость = доля скорости героини (вместо speed)
+  leap?: LeapConfig;
+  cane?: CaneConfig;
+}
+
+/** Охотник: замирает рядом с героиней и прыгает по дуге с упреждением. */
+export interface LeapConfig {
+  radius: number;     // с какого расстояния начинает прыжок
+  freeze: number;     // замирание перед прыжком, с (красная линия)
+  distance: number;   // длина прыжка в радиусах
+  speed: number;      // скорость прыжка, px/с
+  lead: number;       // доля упреждения по скорости героини (1 — полная)
+  cooldown: number;   // пауза между прыжками, с
+}
+
+/** Сталкер: бросает трость, схваченная героиня не может двигаться. */
+export interface CaneConfig {
+  range: number;      // дальность броска, px
+  minRange: number;   // ближе не бросает
+  telegraph: number;  // замах, с
+  speed: number;      // скорость полёта, px/с
+  hold: number;       // хват держится не дольше, с
+  cooldown: number;   // пауза между бросками, с
+  hand: [number, number]; // точка трости относительно ног (вправо; влево зеркально)
+}
+
+export interface AbilityConfig {
+  push: { cooldown: number; radius: number; force: number; resistFactor: number };
+  dash: { cooldown: number; distance: number; duration: number; invul: number; pushRadius: number; force: number };
 }
 
 export interface BossConfig {
@@ -73,6 +105,7 @@ export interface Balance {
   world: { arena: { width: number; height: number }; camera: { lerp: number }; separation: number };
   stats: { minFactor: number; maxFactor: number; armorK: number; regenAlpha: number };
   player: { invulnerability: number; size: number; lowHpRatio: number };
+  abilities: AbilityConfig;
   heroines: Record<HeroineId, HeroineConfig>;
   weapons: Record<string, WeaponConfig>;
   enemies: Record<string, EnemyConfig>;
@@ -219,11 +252,31 @@ export interface ArenaProp {
   depthOf?: number;      // огонь: индекс объекта в props, на котором лежит пламя
 }
 
+/** Музыка: трек меню по кругу и плейлист забега. Громкость × ползунок «Музыка». */
+export interface MusicConfig {
+  volume?: number;
+  menu?: string | null;     // главное меню, по кругу
+  run?: string[];           // забег: треки по очереди, по кругу
+  gap?: number;             // пауза между треками забега, с
+  fade?: number;            // плавное затухание и нарастание, с
+  startDelay?: number;      // задержка трека забега после начала 1-го стрима, с
+  shopVolume?: number;      // громкость в магазине (день), доля
+}
+
+/** Забор по линии арены: тайлы по горизонтали и вертикали. */
+export interface FenceConfig {
+  h: string;              // горизонтальный тайл (верх и низ)
+  v: string;              // вертикальный тайл (лево и право)
+  scale?: number;
+  bottomAlpha?: number;   // нижний забор, когда героиня рядом (перекрывает её)
+}
+
 export interface ArenaConfig {
   border?: number;          // видимая полоса за линией, px
   floorBrightness?: number; // яркость пола 0…1
   floorScale?: number;      // масштаб тайла пола
   dim?: number;             // яркость всего за линией
+  fence?: FenceConfig;      // забор вместо розовой линии; нет — линия
   props?: ArenaProp[];
 }
 
@@ -233,8 +286,9 @@ export interface AssetsConfig {
   images: Record<string, string | null>;
   soundVolume?: number;
   sounds?: Record<string, SoundSpec>;
-  music?: { path?: string | null; volume?: number };
-  arena?: ArenaConfig;  // фоновый трек по кругу; громкость × ползунок «Музыка»
+  music?: MusicConfig;
+  arena?: ArenaConfig;
+  cane?: { shaft: string; open: string; closed: string };  // трость сталкера: стержень-тайл и два конца
 }
 
 export interface TaskState {

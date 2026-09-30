@@ -3,6 +3,7 @@ import { ctx } from '../systems/context';
 import { colorNum, hasImage, imageKey, portraitKey } from '../systems/assets';
 import { loadProgress } from '../systems/save';
 import { createRun } from '../systems/run';
+import { enterRun, playMenuMusic } from '../systems/music';
 import { deriveStats, statRows } from '../systems/stats';
 import { ChatSystem, resetChatMemory } from '../systems/chat';
 import { ChatPanel } from '../ui/chatPanel';
@@ -35,13 +36,13 @@ export class SelectScene extends Phaser.Scene {
     this.chatPanel = null;
     this.chat = null;
     this.busy = false;
+    playMenuMusic();
 
     this.drawBackground();
     const progress = loadProgress();
     this.header.push(
       text(this, 960, 90, 'Cute Bloody Stream', 72, '#ff4f8b', { fontStyle: 'bold', stroke: '#2a0612', strokeThickness: 8 }).setOrigin(0.5),
       text(this, 960, 170, 'Выбери стримершу', 32, '#e8e6f0').setOrigin(0.5),
-      text(this, 960, 1040, 'WASD / стрелки — движение · стрельба автоматическая · Esc — пауза', 22, '#9a96aa').setOrigin(0.5),
     );
 
     const total = HEROINE_IDS.length * CARD_W + (HEROINE_IDS.length - 1) * CARD_GAP;
@@ -231,6 +232,7 @@ export class SelectScene extends Phaser.Scene {
     const d = ctx.debug;
     ctx.run = createRun(ctx.balance, id, d.stream ?? 1, d.coins ?? 0);
     resetChatMemory();
+    enterRun();
     this.cameras.main.fadeOut(300);
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => this.scene.start('Night'));
   }

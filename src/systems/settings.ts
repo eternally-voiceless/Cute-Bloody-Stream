@@ -50,3 +50,22 @@ export function onSettingsOpen(fn: () => void): () => void {
 export function emitSettingsOpen(): void {
   for (const fn of openListeners) fn();
 }
+
+// Режим стрельбы (Q): автоприцел или ручной по мыши. Запоминается между забегами.
+const AIM_KEY = 'cbs_aim';
+
+export function loadManualAim(): boolean {
+  try {
+    return localStorage.getItem(AIM_KEY) === 'manual';
+  } catch {
+    return false;
+  }
+}
+
+export function saveManualAim(manual: boolean): void {
+  try {
+    localStorage.setItem(AIM_KEY, manual ? 'manual' : 'auto');
+  } catch {
+    // без localStorage режим живёт до перезагрузки
+  }
+}

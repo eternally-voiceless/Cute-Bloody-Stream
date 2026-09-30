@@ -12,6 +12,8 @@ const LINE = FLOOR + 1;
 const DECAL = FLOOR + 1.5;
 const GLOW = FLOOR + 2.5;       // над кровью (FLOOR + 2), под объектами
 const BEHIND = FLOOR + 3;       // объекты у верхнего края — за спиной у всех
+const FENCE_BACK = FLOOR + 3.5; // верхний и боковые участки забора: за актёрами, перед объектами у верхнего края
+const FENCE_DROP = 30;          // нижний забор стоит чуть ниже линии: его основание в полосе
 const CLEAR_CENTER = 400;       // радиус чистого центра арены для декалей
 const GLOW_TEX = 'fx:glow';
 
@@ -33,8 +35,13 @@ export function floorSprite(scene: Phaser.Scene, x: number, y: number, w: number
   return floor;
 }
 
-/** Строит арену и возвращает ширину полосы за линией (для границ камеры). */
-export function buildArena(scene: Phaser.Scene): number {
+export interface Arena {
+  border: number;                        // ширина полосы за линией (для границ камеры)
+  update(px: number, py: number): void;  // нижний забор становится прозрачнее, когда героиня за ним
+}
+
+/** Строит арену: пол, полоса, забор (или линия), объекты. */
+export function buildArena(scene: Phaser.Scene): Arena {
   const { width: W, height: H } = ctx.balance.world.arena;
   const c = cfg();
   const b = c.border ?? 0;
@@ -49,7 +56,8 @@ export function buildArena(scene: Phaser.Scene): number {
       scene.add.rectangle(x, y, w, h, 0x000000, a).setOrigin(0).setDepth(STRIP_DIM);
     }
   }
-  scene.add.graphics().lineStyle(8, 0xff3d7f, 0.6).strokeRect(0, 0, W, H).setDepth(LINE);
+  const bottom = buildFence(scene, W, H);
+  if (!bottom) scene.add.graphics().lineStyle(8, 0xff3d7f, 0.6).strokeRect(0, 0, W, H).setDepth(LINE);
 
   const props = c.props ?? [];
   const depths = new Map<number, { depth: number; x: number; y: number; h: number }>();
@@ -99,7 +107,39 @@ export function buildArena(scene: Phaser.Scene): number {
     addFire(scene, p, base?.depth ?? BEHIND);
   });
 
-  return b;
+  const low = c.fence?.bottomAlpha ?? 0.45;
+  return {
+    border: b,
+    update: (_px, py) => {
+      if (!bottom) return;
+      // Героиня у нижней линии: забор перед ней, делаем его полупрозрачным.
+      const target = py > H - bottom.height * 0.9 ? low : 1;
+      bottom.alpha += (target - bottom.alpha) * 0.15;
+    },
+  };
+}
+
+/** Забор по линии арены из тайлов. Возвращает нижний участок (он перекрывает актёров) или null, если картинок нет. */
+function buildFence(scene: Phaser.Scene, W: number, H: number): Phaser.GameObjects.TileSprite | null {
+  const f = cfg().fence;
+  if (!f || !scene.textures.exists(envKey(f.h)) || !scene.textures.exists(envKey(f.v))) {
+    if (f) console.warn('[arena] картинки забора не загружены, вместо забора — линия');
+    return null;
+  }
+  const s = f.scale ?? 1;
+  const hTex = scene.textures.get(envKey(f.h)).get();
+  const vTex = scene.textures.get(envKey(f.v)).get();
+  const hh = hTex.height * s;
+  const vw = vTex.width * s;
+  const tile = (x: number, y: number, w: number, h: number, key: string) =>
+    scene.add.tileSprite(x, y, w, h, envKey(key)).setTileScale(s, s);
+  // Бока: столбы по линии, от верхнего забора до нижнего.
+  tile(0, -hh * 0.35, vw, H + hh * 0.35 + FENCE_DROP, f.v).setOrigin(0.5, 0).setDepth(FENCE_BACK);
+  tile(W, -hh * 0.35, vw, H + hh * 0.35 + FENCE_DROP, f.v).setOrigin(0.5, 0).setDepth(FENCE_BACK);
+  // Верх: основание на линии, забор уходит в полосу — всегда за актёрами.
+  tile(-vw / 2, 0, W + vw, hh, f.h).setOrigin(0, 1).setDepth(FENCE_BACK + 0.1);
+  // Низ: основание чуть ниже линии, забор перед всеми, кто внутри арены.
+  return tile(-vw / 2, H + FENCE_DROP, W + vw, hh, f.h).setOrigin(0, 1).setDepth(H + FENCE_DROP);
 }
 
 function addFire(scene: Phaser.Scene, p: ArenaProp, baseDepth: number): void {
