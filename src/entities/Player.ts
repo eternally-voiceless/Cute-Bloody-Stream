@@ -12,6 +12,8 @@ export class Player {
   facing: Dir4 = 'down';
   moving = false;
   fireTimer = 0;
+  ammo = 0;
+  reloadT = 0;
   readonly radius: number;
   readonly view: SpriteView;
   readonly weapon: Phaser.GameObjects.Image;

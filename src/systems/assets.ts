@@ -2,12 +2,14 @@ import Phaser from 'phaser';
 import type { AssetsConfig, BobSpec, PlaceholderSpec, SpriteSpec } from '../types';
 import { HEROINE_IDS } from '../types';
 import { ctx } from './context';
+import { MUSIC_KEY } from './music';
 
 // Ассеты по ключам из assets.json (ТЗ, раздел 3). Нет файла → предупреждение и плейсхолдер.
 
 export const portraitKey = (id: string, kind: 'base' | 'selected' | 'background') => `portrait:${id}:${kind}`;
 export const spriteTexKey = (key: string) => `spr:${key}`;
 export const imageTexKey = (key: string) => `img:${key}`;
+export const soundKey = (key: string) => `snd:${key}`;
 const placeholderKey = (key: string) => `ph:${key}`;
 const animKey = (sprite: string, anim: string) => `${sprite}:${anim}`;
 
@@ -33,6 +35,9 @@ export function validateAssets(a: AssetsConfig): void {
     for (const v of spec.variants ?? []) if (!a.sprites[v]) console.warn(`[assets] sprites.${k}.variants: нет sprites.${v}`);
   }
   for (const k of REQUIRED_IMAGES) if (!(k in (a.images ?? {}))) console.warn(`[assets] нет images.${k}`);
+  for (const [k, spec] of Object.entries(a.sounds ?? {})) {
+    for (const part of spec.sequence ?? []) if (!a.sounds?.[part]) console.warn(`[assets] sounds.${k}.sequence: нет sounds.${part}`);
+  }
 }
 
 export function queueAssets(scene: Phaser.Scene, a: AssetsConfig): void {
@@ -61,6 +66,10 @@ export function queueAssets(scene: Phaser.Scene, a: AssetsConfig): void {
   for (const [key, path] of Object.entries(a.images ?? {})) {
     if (path) scene.load.image(imageTexKey(key), path);
   }
+  for (const [key, spec] of Object.entries(a.sounds ?? {})) {
+    if (spec.path) scene.load.audio(soundKey(key), spec.path);
+  }
+  if (a.music?.path) scene.load.audio(MUSIC_KEY, a.music.path);
 }
 
 // Создаёт анимации Phaser для загруженных спрайт-листов.

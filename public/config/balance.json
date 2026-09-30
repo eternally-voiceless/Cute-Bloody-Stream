@@ -5,21 +5,21 @@
 
   "heroines": {
     "genki": {
-      "name": "Генки", "archetype": "Спидранерша", "color": "#ff6fb1", "weapon": "rifle",
+      "name": "Мива", "nick": "miwaGG", "color": "#ff6fb1", "weapon": "rifle",
       "baseHp": 100, "baseMoveSpeed": 260,
       "stats": { "hp": -20, "damage": 0, "attackSpeed": 15, "moveSpeed": 20, "range": 0,
                  "armor": 0, "regen": 2, "crit": 5, "resourceSearch": 10 },
       "styleMultipliers": { "combo": 1.5 }
     },
     "kuudere": {
-      "name": "Кудере", "archetype": "Снайперша", "color": "#2b3a67", "weapon": "laser",
+      "name": "Рэй", "nick": "BlueBeam", "color": "#2b3a67", "weapon": "laser",
       "baseHp": 100, "baseMoveSpeed": 240,
       "stats": { "hp": 0, "damage": 10, "attackSpeed": 0, "moveSpeed": -10, "range": 20,
                  "armor": 0, "regen": 2, "crit": 15, "resourceSearch": 10 },
       "styleMultipliers": { "crit": 1.5, "longShot": 1.5 }
     },
     "yandere": {
-      "name": "Яндере", "archetype": "Мясница", "color": "#b3122e", "weapon": "shotgun",
+      "name": "Зои", "nick": "forever_yours", "color": "#b3122e", "weapon": "shotgun",
       "baseHp": 100, "baseMoveSpeed": 230,
       "stats": { "hp": 40, "damage": 15, "attackSpeed": 0, "moveSpeed": -10, "range": -10,
                  "armor": 5, "regen": 5, "crit": 5, "resourceSearch": 10 },
@@ -30,13 +30,13 @@
   "weapons": {
     "rifle":   { "name": "Штурмовая винтовка", "damage": 6, "fireRate": 6, "range": 450, "spread": 8, "pellets": 1,
                  "pierce": 0, "pierceDamageFactor": 1, "projectileSpeed": 900,
-                 "critChance": 0, "critMultiplier": 2, "knockback": 0 },
+                 "critChance": 0, "critMultiplier": 2, "knockback": 0, "magazine": 45, "reloadTime": 1 },
     "laser":   { "name": "Лазерная снайперская винтовка", "damage": 40, "fireRate": 0.8, "range": 900, "spread": 0, "pellets": 1,
                  "pierce": 3, "pierceDamageFactor": 0.8, "projectileSpeed": 2500,
                  "critChance": 5, "critMultiplier": 2.5, "knockback": 0 },
     "shotgun": { "name": "Дробовик", "damage": 7, "fireRate": 1.2, "range": 300, "spread": 40, "pellets": 6,
                  "pierce": 1, "pierceDamageFactor": 0.5, "projectileSpeed": 800,
-                 "critChance": 0, "critMultiplier": 2, "knockback": 40 }
+                 "critChance": 0, "critMultiplier": 2, "knockback": 40, "magazine": 8, "reloadTime": 1 }
   },
 
   "enemies": {

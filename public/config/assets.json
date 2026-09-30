@@ -209,5 +209,18 @@
     "projectile_rifle": null,
     "projectile_laser": null,
     "projectile_shotgun": null
-  }
+  },
+  "soundVolume": 0.8,
+  "sounds": {
+    "fire_rifle": {"path": "assets/sounds/rifle_shot.mp3", "volume": 0.45, "detune": 80, "max": 5, "tailToPeriod": true, "rateScale": 0.3, "maxRate": 1.4},
+    "reload_rifle": {"sequence": ["rifle_reload_1", "rifle_reload_2"]},
+    "rifle_reload_1": {"path": "assets/sounds/rifle_reload_1.mp3", "volume": 0.6},
+    "rifle_reload_2": {"path": "assets/sounds/rifle_reload_2.mp3", "volume": 0.6},
+    "fire_laser": {"path": "assets/sounds/laser_shot.mp3", "volume": 0.7, "detune": 40, "max": 3},
+    "fire_shotgun": {"path": "assets/sounds/shotgun_shot.mp3", "volume": 0.8, "detune": 60},
+    "reload_shotgun": {"sequence": ["shotgun_pump_1", "shotgun_pump_2"]},
+    "shotgun_pump_1": {"path": "assets/sounds/shotgun_pump_1.mp3", "volume": 0.6},
+    "shotgun_pump_2": {"path": "assets/sounds/shotgun_pump_2.mp3", "volume": 0.6}
+  },
+  "music": {"path": null, "volume": 0.5}
 }

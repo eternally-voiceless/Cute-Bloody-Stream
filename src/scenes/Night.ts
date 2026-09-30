@@ -12,6 +12,8 @@ import { loadProgress } from '../systems/save';
 import { Player } from '../entities/Player';
 import { Enemy } from '../entities/Enemy';
 import { Boss } from '../entities/Boss';
+import { playSound } from '../systems/sound';
+import { onSettingsOpen } from '../systems/settings';
 import { Projectile, segmentHitsCircle } from '../entities/Projectile';
 import { Coin } from '../entities/Coin';
 import { ChatPanel } from '../ui/chatPanel';
@@ -54,6 +56,8 @@ export class NightScene extends Phaser.Scene {
   private bossHalfSent = false;
   private cleared = false;
   private overlay: Phaser.GameObjects.GameObject[] = [];
+  private exitMenu: Phaser.GameObjects.GameObject[] = [];
+  private leaving = false;
   private introDom: Phaser.GameObjects.DOMElement | null = null;
 
   constructor() { super('Night'); }
@@ -75,6 +79,8 @@ export class NightScene extends Phaser.Scene {
     this.taskNearSent = false;
     this.bossHalfSent = false;
     this.overlay = [];
+    this.exitMenu = [];
+    this.leaving = false;
     this.introDom = null;
 
     const b = this.b;
@@ -87,6 +93,7 @@ export class NightScene extends Phaser.Scene {
     this.add.graphics().lineStyle(8, 0xff3d7f, 0.6).strokeRect(0, 0, a.width, a.height).setDepth(-1e6 + 1);
 
     this.player = new Player(this, b, this.run.heroineId, this.stats, a.width / 2, a.height / 2);
+    this.player.ammo = this.stats.weapon.magazine ?? 0;
     this.player.hp = this.stats.maxHp;   // intro: HP до максимума
     this.player.sync(0);
 
@@ -112,10 +119,18 @@ export class NightScene extends Phaser.Scene {
     this.keys = kb.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,ESC,F9') as Record<string, Phaser.Input.Keyboard.Key>;
     kb.on('keydown', (e: KeyboardEvent) => {
       if (this.st.phase === 'intro' && e.code !== 'Escape') this.startFight();
+      // Итоги стрима: пробел или Enter — «Дальше».
+      else if (this.st.phase === 'summary' && this.exitMenu.length === 0 && (e.code === 'Space' || e.code === 'Enter')) this.next();
     });
     this.input.on('pointerdown', () => { if (this.st.phase === 'intro') this.startFight(); });
-    this.keys.ESC.on('down', () => { if (this.st.phase === 'fight' && !this.ended) this.togglePause(); });
+    this.keys.ESC.on('down', () => {
+      if (this.st.phase === 'fight' && !this.ended) this.togglePause();
+      else if (this.st.phase === 'summary') this.toggleExitMenu();
+    });
     this.keys.F9.on('down', () => { if (ctx.debug.enabled && this.st.phase === 'fight') this.debugFinish(); });
+    // Открыли настройки посреди боя — стрим встаёт на паузу.
+    const offSettings = onSettingsOpen(() => { if (this.st.phase === 'fight' && !this.ended && !this.paused) this.togglePause(); });
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, offSettings);
 
     this.showIntro();
     this.chat.event('stream_start', { n: this.run.stream });
@@ -389,13 +404,19 @@ export class NightScene extends Phaser.Scene {
     const w = s.weapon;
     const period = 1 / s.fireRate;
     p.fireTimer -= dt;
+    // Перезарядка магазина: во время неё не стреляем и не копим выстрелы.
+    if (p.reloadT > 0) {
+      p.reloadT -= dt;
+      p.fireTimer = Math.max(p.fireTimer, 0);
+      if (p.reloadT <= 0) p.ammo = w.magazine ?? 0;
+    }
     const target = this.findTarget();
     if (!target) {
       p.fireTimer = Math.max(p.fireTimer, 0);
       return;
     }
     p.aimAt(target.x, target.y);
-    if (p.fireTimer > 0) return;
+    if (p.reloadT > 0 || p.fireTimer > 0) return;
     p.fireTimer = Math.max(p.fireTimer + period, 0);
     const m = p.barrelTip;
     const base = Math.atan2(target.y - p.muzzle.y, target.x - p.muzzle.x);
@@ -403,6 +424,14 @@ export class NightScene extends Phaser.Scene {
     for (let i = 0; i < w.pellets; i++) {
       const spread = Phaser.Math.DegToRad(Phaser.Math.FloatBetween(-w.spread / 2, w.spread / 2));
       this.getProjectile().fire(m.x, m.y, base + spread, w.projectileSpeed, s.range, s.damage, w.pierce, this.volley);
+    }
+    playSound(this, `fire_${s.weaponId}`, { period, speedup: s.fireRate / w.fireRate });
+    if (w.magazine) {
+      p.ammo--;
+      if (p.ammo <= 0) {
+        p.reloadT = w.reloadTime ?? 1;
+        playSound(this, `reload_${s.weaponId}`);
+      }
     }
   }
 
@@ -677,6 +706,8 @@ export class NightScene extends Phaser.Scene {
   }
 
   private next(): void {
+    if (this.leaving) return;
+    this.leaving = true;
     const run = this.run;
     const finished = run.stream;
     run.stream++;
@@ -740,6 +771,32 @@ export class NightScene extends Phaser.Scene {
     }, { color: 0x4a4560, size: 26 }));
   }
 
+  /** Esc на итогах стрима: выйти в главное меню (как в дне). */
+  private toggleExitMenu(): void {
+    if (this.exitMenu.length > 0) {
+      for (const o of this.exitMenu) o.destroy();
+      this.exitMenu = [];
+      return;
+    }
+    if (this.leaving) return;
+    const fix = <T extends Phaser.GameObjects.GameObject>(o: T): T => {
+      (o as unknown as Phaser.GameObjects.Components.ScrollFactor).setScrollFactor(0);
+      (o as unknown as Phaser.GameObjects.Components.Depth).setDepth(400000);
+      this.exitMenu.push(o);
+      return o;
+    };
+    fix(this.add.rectangle(960, 540, 1920, 1080, 0x000000, 0.65).setInteractive());
+    fix(panel(this, 610, 330, 700, 420, 0.95));
+    fix(text(this, 960, 400, 'Выйти в меню?', 48, '#ffffff', { fontStyle: 'bold' }).setOrigin(0.5));
+    fix(text(this, 960, 465, 'Забег будет потерян', 26, '#b9b5c9').setOrigin(0.5));
+    fix(button(this, 960, 560, 380, 76, 'Продолжить', () => this.toggleExitMenu()));
+    fix(button(this, 960, 660, 380, 64, 'В меню', () => {
+      this.leaving = true;
+      ctx.run = null;
+      this.scene.start('Select');
+    }, { color: 0x4a4560, size: 26 }));
+  }
+
   // ---------- HUD и эффекты ----------
 
   private chatState(): ChatState {
@@ -776,6 +833,7 @@ export class NightScene extends Phaser.Scene {
       hypeIndex: hype.index,
       stream: this.run.stream,
       streams: STREAMS,
+      nick: this.b.heroines[this.run.heroineId].nick,
       style: st.styleRaw,
       threshold: threshold(this.b, this.run.stream),
       viewers: viewers(this.b, this.run),

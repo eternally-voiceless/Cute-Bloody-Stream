@@ -13,8 +13,8 @@ export const STAT_IDS: StatId[] = [
 export type TaskType = 'kills' | 'crits' | 'longShots' | 'closeKills' | 'combo' | 'noHit';
 
 export interface HeroineConfig {
-  name: string;
-  archetype: string;
+  name: string;        // имя: Мива, Рэй, Зои
+  nick: string;        // ник стримерши
   color: string;
   weapon: string;
   baseHp: number;
@@ -36,6 +36,8 @@ export interface WeaponConfig {
   critChance: number;
   critMultiplier: number;
   knockback: number;
+  magazine?: number;     // выстрелов до перезарядки; нет поля — без перезарядки
+  reloadTime?: number;   // перезарядка, с
 }
 
 export interface EnemyConfig {
@@ -190,10 +192,26 @@ export interface SpriteSpec {
   bob?: BobSpec;
 }
 
+/** Звук: файл (`path`) или цепочка других звуков (`sequence`), которые играют один за другим. */
+export interface SoundSpec {
+  path?: string | null;
+  volume?: number;       // 0…1, умножается на soundVolume
+  detune?: number;       // случайный сдвиг высоты ± центов при каждом проигрывании
+  max?: number;          // сколько копий может звучать одновременно
+  sequence?: string[];
+  interrupt?: boolean;   // новая цепочка обрывает хвост предыдущей (по умолчанию да)
+  tailToPeriod?: boolean; // выстрел: хвост обрезается до интервала между выстрелами, ритм очереди слышен при любой скорости
+  rateScale?: number;    // выстрел: ускорение воспроизведения от скорости атаки, 1 + rateScale·(скорострельность/базовая − 1)
+  maxRate?: number;      // предел ускорения (по умолчанию 1.5)
+}
+
 export interface AssetsConfig {
   portraits: Record<HeroineId, { base: string | null; selected: string | null; background: string | null }>;
   sprites: Record<string, SpriteSpec>;
   images: Record<string, string | null>;
+  soundVolume?: number;
+  sounds?: Record<string, SoundSpec>;
+  music?: { path?: string | null; volume?: number };  // фоновый трек по кругу; громкость × ползунок «Музыка»
 }
 
 export interface TaskState {

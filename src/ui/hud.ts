@@ -13,6 +13,7 @@ export interface HudData {
   hypeIndex: number;
   stream: number;
   streams: number;
+  nick: string;
   style: number;
   threshold: number;
   viewers: number;
@@ -117,7 +118,7 @@ export class Hud {
     g.fillStyle(0xffffff, 1).fillEllipse(176, 46, 26, 16);
     g.fillStyle(0x140c1e, 1).fillCircle(176, 46, 5);
     this.viewersText.setText(d.viewers.toLocaleString('ru-RU'));
-    this.streamText.setText(`Стрим ${d.stream} / ${d.streams}`);
+    this.streamText.setText(`@${d.nick} · стрим ${d.stream} / ${d.streams}`);
 
     // STYLE GOAL
     this.pill(GOAL_X, GOAL_Y, GOAL_W, 76, 0x140c1e);

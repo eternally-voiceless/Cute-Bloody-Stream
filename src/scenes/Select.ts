@@ -93,7 +93,7 @@ export class SelectScene extends Phaser.Scene {
       .fillRect(-CARD_W / 2, CARD_H / 2 - 140, CARD_W, 140);
     c.add(strip);
     c.add(text(this, 0, CARD_H / 2 - 78, h.name, 44, '#ffffff', { fontStyle: 'bold' }).setOrigin(0.5));
-    c.add(text(this, 0, CARD_H / 2 - 34, h.archetype, 24, '#e0dcef').setOrigin(0.5));
+    c.add(text(this, 0, CARD_H / 2 - 34, `@${h.nick}`, 24, '#ffb3cf', { fontStyle: 'bold' }).setOrigin(0.5));
 
     if (completed) {
       const badge = this.add.graphics();
@@ -169,12 +169,10 @@ export class SelectScene extends Phaser.Scene {
 
     // Слева: панель статов и кнопки.
     const stats = deriveStats(b, id, b.heroines[id].stats);
-    const w = b.weapons[h.weapon];
     this.selected.push(panel(this, 40, 60, 480, 960));
     this.selected.push(text(this, 80, 90, h.name, 56, '#ffffff', { fontStyle: 'bold' }));
-    this.selected.push(text(this, 80, 160, h.archetype, 28, '#ffb3cf'));
-    this.selected.push(text(this, 80, 205, `Оружие: ${w.name}`, 22, '#d6d3e3', { wordWrap: { width: 410 } }));
-    let y = 280;
+    this.selected.push(text(this, 80, 156, `@${h.nick}`, 28, '#ffb3cf', { fontStyle: 'bold' }));
+    let y = 230;
     for (const row of statRows(stats)) {
       this.selected.push(text(this, 80, y, row.label, 22, '#b9b5c9'));
       this.selected.push(text(this, 480, y, row.value, 22, '#ffffff', { fontStyle: 'bold' }).setOrigin(1, 0));
@@ -184,7 +182,7 @@ export class SelectScene extends Phaser.Scene {
     this.selected.push(button(this, 280, 945, 400, 64, 'Назад', () => this.exitSelected(), { color: 0x4a4560, size: 26 }));
 
     // Справа: чат под эту героиню.
-    this.chatPanel = new ChatPanel(this, 1400, 40, 480, 1000, b.chat.maxMessages);
+    this.chatPanel = new ChatPanel(this, 1420, 22, 480, 1018, b.chat.maxMessages);
     this.chat = new ChatSystem(this.chatPanel, ctx.chat, b, id);
     this.chat.idleCategory = `select_${id}`;
     const cleared = loadProgress().completed[id];

@@ -41,7 +41,7 @@ export class DayScene extends Phaser.Scene {
 
     // Слева: текущие статы.
     add(panel(this, 80, 200, 640, 700));
-    add(text(this, 120, 230, `${h.name} — ${h.archetype}`, 36, '#ffffff', { fontStyle: 'bold' }));
+    add(text(this, 120, 230, `${h.name} · @${h.nick}`, 36, '#ffffff', { fontStyle: 'bold' }));
     add(text(this, 120, 282, `Стиль за забег: ${run.totalStyle} · убийств: ${run.totalKills}`, 22, '#b9b5c9'));
     let y = 340;
     for (const row of statRows(stats)) {

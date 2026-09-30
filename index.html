@@ -43,6 +43,45 @@
       .donation .d-amount { font-size: 44px; font-weight: 900; color: #ffe066; text-shadow: 0 3px 0 rgba(0,0,0,.25); }
       .donation .d-text { font-size: 28px; font-weight: 700; margin-top: 10px; }
       .donation .d-hint { font-size: 18px; opacity: .8; margin-top: 18px; }
+      /* Настройки: значок в правом верхнем углу (над шапкой чата) и модальное окно громкости. */
+      .settings-root { position: absolute; inset: 0; z-index: 1000000; pointer-events: none;
+        font: 22px/1.35 "Segoe UI", Roboto, Arial, sans-serif; color: #e8e6f0; }
+      .settings-gear {
+        position: absolute; top: 22px; right: 22px; width: 41px; height: 41px; padding: 0; display: grid; place-items: center;
+        pointer-events: auto; cursor: pointer; color: #e8e6f0;
+        background: rgba(12, 10, 20, 0.72); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px;
+        transition: color .15s, background .15s, transform .25s;
+      }
+      .settings-gear:hover { color: #fff; background: rgba(255, 61, 127, 0.55); transform: rotate(40deg); }
+      .settings-gear:focus-visible { outline: 2px solid #ff3d7f; outline-offset: 2px; }
+      .settings-backdrop { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: auto;
+        background: rgba(0, 0, 0, 0.55); }
+      .settings-backdrop[hidden] { display: none; }
+      .settings-panel {
+        box-sizing: border-box; width: 640px; padding: 34px 40px 36px; border-radius: 20px;
+        background: rgba(22, 18, 34, 0.96); border: 1px solid rgba(255, 255, 255, 0.14);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+      }
+      .settings-title { font-size: 40px; font-weight: 800; color: #fff; margin-bottom: 26px; }
+      .settings-row { display: grid; grid-template-columns: 210px 1fr 70px; align-items: center; gap: 18px; margin: 18px 0; cursor: pointer; }
+      .settings-label { font-weight: 700; display: flex; flex-direction: column; }
+      .settings-note { font-size: 15px; font-weight: 400; color: #9d97b3; }
+      .settings-note[hidden] { display: none; }
+      .settings-value { text-align: right; font-variant-numeric: tabular-nums; color: #ffb3cf; font-weight: 700; }
+      .settings-row input[type=range] {
+        -webkit-appearance: none; appearance: none; width: 100%; height: 10px; border-radius: 5px; margin: 0; cursor: pointer;
+        background: linear-gradient(to right, #ff3d7f var(--fill, 50%), rgba(255, 255, 255, 0.16) var(--fill, 50%));
+      }
+      .settings-row input[type=range]::-webkit-slider-thumb {
+        -webkit-appearance: none; width: 26px; height: 26px; border-radius: 50%; background: #fff; border: 3px solid #ff3d7f;
+      }
+      .settings-row input[type=range]::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: #fff; border: 3px solid #ff3d7f; }
+      .settings-row input[type=range]:focus-visible { outline: 2px solid #ff3d7f; outline-offset: 6px; }
+      .settings-done {
+        display: block; margin: 30px auto 0; min-width: 240px; padding: 14px 28px; border: 0; border-radius: 14px; cursor: pointer;
+        font: 700 24px "Segoe UI", Roboto, Arial, sans-serif; color: #fff; background: #ff3d7f;
+      }
+      .settings-done:hover { background: #ff5a93; }
     </style>
   </head>
   <body>
